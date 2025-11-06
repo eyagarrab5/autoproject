@@ -1,11 +1,9 @@
 const mongoose = require('mongoose');
 const schema = mongoose.Schema;
-const Counter = require('./counter');
 
 // définition du schéma Voiture (Car)
 const VoitureSchema = new schema({
-    _id: { type: Number },
-    matr: { type: String, required: true, unique: true },
+    _id: { type: String, required: true },
     marque: { type: String, required: true },
     modele: { type: String, required: true },
     annee: { type: Number },
@@ -26,14 +24,13 @@ function todayStr() {
 }
 
 async function getNext(seqName) {
-  const c = await Counter.findByIdAndUpdate(seqName, { $inc: { seq: 1 } }, { new: true, upsert: true });
-  return c.seq;
+  return null;
 }
 
 VoitureSchema.pre('save', async function(next) {
   try {
-    if (this.isNew && (this._id === undefined || this._id === null)) {
-      this._id = await getNext('voiture');
+    if (this._id != null) {
+      this._id = String(this._id).trim().toUpperCase();
     }
     const now = todayStr();
     if (this.isNew && !this.createdAt) this.createdAt = now;
@@ -46,6 +43,11 @@ VoitureSchema.pre('save', async function(next) {
 
 VoitureSchema.pre('findOneAndUpdate', function(next) {
   try {
+    const u = this.getUpdate();
+    if (u && u._id != null) {
+      u._id = String(u._id).trim().toUpperCase();
+      this.set(u);
+    }
     this.set({ updatedAt: todayStr() });
     next();
   } catch (e) { next(e); }

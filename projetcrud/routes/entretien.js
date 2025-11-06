@@ -4,6 +4,8 @@ const entretienController = require('../controller/entretienController');
 
 // create
 router.post('/', entretienController.addEntretien);
+// create by matricule (path param)
+router.post('/voiture/:matr', entretienController.addEntretienByMatr);
 // list all
 router.get('/', entretienController.getEntretiens);
 // list by car

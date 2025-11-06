@@ -7,7 +7,7 @@
   "variable": [
     { "key": "baseUrl", "value": "http://localhost:3000", "type": "string" },
     { "key": "voitureId", "value": "1", "type": "string" },
-    { "key": "voitureMatr", "value": "AA-123-BB", "type": "string" },
+    { "key": "voitureMatr", "value": "PC-207-A", "type": "string" },
     { "key": "entretienId", "value": "1", "type": "string" },
     { "key": "carId", "value": "1", "type": "string" }
   ],
@@ -23,7 +23,7 @@
             "url": { "raw": "{{baseUrl}}/voitures", "host": ["{{baseUrl}}"], "path": ["voitures"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"matr\": \"gg-207-AB\",\n  \"marque\": \"Peugeot\",\n  \"modele\": \"208\",\n  \"annee\": 2020,\n  \"carburant\": \"essence\",\n  \"kilometrage\": 15000,\n  \"etat\": \"available\",\n  \"tarifJournalier\": 45\n}"
+              "raw": "{\n  \"matr\": \"Pc-207-A\",\n  \"marque\": \"Peugeot\",\n  \"modele\": \"208\",\n  \"annee\": 2020,\n  \"carburant\": \"essence\",\n  \"kilometrage\": 15000,\n  \"etat\": \"available\",\n  \"tarifJournalier\": 45\n}"
             }
           },
           "event": [
@@ -95,7 +95,7 @@
             "url": { "raw": "{{baseUrl}}/entretiens", "host": ["{{baseUrl}}"], "path": ["entretiens"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"car\": {{carId}},\n  \"type\": \"routine\",\n  \"date\": \"2025-01-15\",\n  \"description\": \"Vidange + filtre\",\n  \"cout\": 120,\n  \"piecesReconditionneesPct\": 30,\n  \"dechetsKg\": 1.2\n}"
+              "raw": "{\n  \"matr\": \"{{voitureMatr}}\",\n  \"type\": \"routine\",\n  \"date\": \"2025-01-15\",\n  \"description\": \"Vidange + filtre\",\n  \"cout\": 120,\n  \"piecesReconditionneesPct\": 30,\n  \"dechetsKg\": 1.2\n}"
             }
           },
           "event": [

@@ -4,11 +4,36 @@ const Voiture = require('../model/voiture');
 async function addEntretien(req, res) {
   try {
     // allow creation by voitureNumero if provided
-    if (!req.body.car && req.body.voitureNumero != null) {
-      const v = await Voiture.findOne({ numero: req.body.voitureNumero }).select('_id');
-      if (!v) return res.status(400).json({ message: 'voitureNumero not found' });
-      req.body.car = v._id;
+    if (!req.body.car) {
+      let v = null;
+      if (req.body.matr != null) {
+        v = await Voiture.findById(String(req.body.matr).trim().toUpperCase()).select('_id');
+        if (!v) return res.status(400).json({ message: 'matr not found' });
+        req.body.car = v._id;
+      } else if (req.body.voitureNumero != null) {
+        v = await Voiture.findById(String(req.body.voitureNumero).trim().toUpperCase()).select('_id');
+        if (!v) return res.status(400).json({ message: 'voitureNumero not found' });
+        req.body.car = v._id;
+      }
+    } else {
+      req.body.car = String(req.body.car).trim().toUpperCase();
     }
+    const entretien = new Entretien(req.body);
+    await entretien.save();
+    res.status(201).json(entretien);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+}
+
+async function addEntretienByMatr(req, res) {
+  try {
+    const matr = String(req.params.matr || '').trim().toUpperCase();
+    if (!matr) return res.status(400).json({ message: 'matr is required' });
+    const v = await Voiture.findById(matr).select('_id');
+    if (!v) return res.status(400).json({ message: 'matr not found' });
+    req.body.car = v._id;
     const entretien = new Entretien(req.body);
     await entretien.save();
     res.status(201).json(entretien);
@@ -78,4 +103,5 @@ module.exports = {
   updateEntretien,
   deleteEntretien,
   getEntretiensByCar,
+  addEntretienByMatr,
 };
