@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const voitureController = require('../controller/voitureController');
+const { validateVoitureCreate, validateVoitureUpdate } = require('../middl/validate');
 
 // create
-router.post('/', voitureController.addVoiture);
+router.post('/', validateVoitureCreate, voitureController.addVoiture);
 // debug echo body
 router.post('/echo', voitureController.echo);
 // list
@@ -15,7 +16,7 @@ router.delete('/plate/:matr', voitureController.deleteVoitureByMatr);
 // get by id
 router.get('/:id', voitureController.getVoitureById);
 // update
-router.put('/:id', voitureController.updateVoiture);
+router.put('/:id', validateVoitureUpdate, voitureController.updateVoiture);
 // delete
 router.delete('/:id', voitureController.deleteVoiture);
 

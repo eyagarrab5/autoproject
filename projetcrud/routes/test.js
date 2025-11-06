@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const testController=require("../controller/testController");
-const validate=require('../middl/validate')
+const { validate } = require('../middl/validate')
 
 router.get('/', (req, res) => {
     console.log('hello 4 data');

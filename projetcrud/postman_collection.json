@@ -23,10 +23,33 @@
             "url": { "raw": "{{baseUrl}}/voitures", "host": ["{{baseUrl}}"], "path": ["voitures"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"matr\": \"Pc-207-A\",\n  \"marque\": \"Peugeot\",\n  \"modele\": \"208\",\n  \"annee\": 2020,\n  \"carburant\": \"essence\",\n  \"kilometrage\": 15000,\n  \"etat\": \"available\",\n  \"tarifJournalier\": 45\n}"
+              "raw": "{\n  \"matr\": \"VV-309-B\",\n  \"marque\": \"Peugeot-SPORT\",\n  \"modele\": \"308\",\n  \"annee\": 2024,\n  \"carburant\": \"essence\",\n  \"kilometrage\": 12000,\n  \"etat\": \"available\",\n  \"tarifJournalier\": 75\n}"
             }
           },
           "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const errs = [];",
+                  "const raw = pm.request.body?.to?.raw ? pm.request.body.to.raw() : pm.request.body?.raw;",
+                  "let payload = {}; try { payload = JSON.parse(raw || '{}'); } catch (e) { errs.push('Body JSON invalide'); }",
+                  "if (!pm.variables.get('baseUrl')) errs.push('baseUrl manquant');",
+                  "if (!payload.matr || typeof payload.matr !== 'string') errs.push('matr requis');",
+                  "if (!payload.marque) errs.push('marque requise');",
+                  "if (!payload.modele) errs.push('modele requis');",
+                  "const carburants = ['essence','diesel','hybride','electrique'];",
+                  "if (payload.carburant != null && !carburants.includes(String(payload.carburant).toLowerCase())) errs.push('carburant invalide');",
+                  "if (payload.annee != null && !Number.isInteger(payload.annee)) errs.push('annee doit etre un entier');",
+                  "if (payload.kilometrage != null && Number(payload.kilometrage) < 0) errs.push('kilometrage >= 0');",
+                  "const etats = ['available','rented','maintenance','unavailable'];",
+                  "if (payload.etat != null && !etats.includes(String(payload.etat))) errs.push('etat invalide');",
+                  "if (payload.tarifJournalier != null && Number(payload.tarifJournalier) < 0) errs.push('tarifJournalier >= 0');",
+                  "if (errs.length) { console.warn('Avertissements (client):', errs); }"
+                ],
+                "type": "text/javascript"
+              }
+            },
             {
               "listen": "test",
               "script": {
@@ -73,7 +96,23 @@
               "mode": "raw",
               "raw": "{\n  \"kilometrage\": 20000,\n  \"etat\": \"maintenance\"\n}"
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (!pm.collectionVariables.get('voitureId')) throw new Error('voitureId manquant');",
+                  "const body = pm.request.body?.to?.raw ? pm.request.body.to.raw() : pm.request.body?.raw;",
+                  "let payload = {}; try { payload = JSON.parse(body || '{}'); } catch (e) { throw new Error('Body JSON invalide'); }",
+                  "if (payload.kilometrage != null && Number(payload.kilometrage) < 0) throw new Error('kilometrage >= 0');",
+                  "const etats = ['available','rented','maintenance','unavailable'];",
+                  "if (payload.etat != null && !etats.includes(String(payload.etat))) throw new Error('etat invalide');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Delete voiture",
@@ -99,6 +138,23 @@
             }
           },
           "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const body = pm.request.body?.to?.raw ? pm.request.body.to.raw() : pm.request.body?.raw;",
+                  "let payload = {}; try { payload = JSON.parse(body || '{}'); } catch (e) { throw new Error('Body JSON invalide'); }",
+                  "if (!payload.matr && !payload.car && !payload.voitureNumero) throw new Error('matr ou car requis');",
+                  "const types = ['routine','reparation','inspection','autre'];",
+                  "if (!types.includes(String(payload.type))) throw new Error('type invalide');",
+                  "if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(String(payload.date))) throw new Error('date au format YYYY-MM-DD requise');",
+                  "if (payload.cout == null || Number(payload.cout) < 0) throw new Error('cout >= 0 requis');",
+                  "if (payload.piecesReconditionneesPct != null) { const v = Number(payload.piecesReconditionneesPct); if (v < 0 || v > 100) throw new Error('piecesReconditionneesPct 0..100'); }",
+                  "if (payload.dechetsKg != null && Number(payload.dechetsKg) < 0) throw new Error('dechetsKg >= 0');"
+                ],
+                "type": "text/javascript"
+              }
+            },
             {
               "listen": "test",
               "script": {
@@ -145,7 +201,21 @@
               "mode": "raw",
               "raw": "{\n  \"description\": \"Vidange + filtre + plaquettes\",\n  \"cout\": 180\n}"
             }
-          }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (!pm.collectionVariables.get('entretienId')) throw new Error('entretienId manquant');",
+                  "const body = pm.request.body?.to?.raw ? pm.request.body.to.raw() : pm.request.body?.raw;",
+                  "let payload = {}; try { payload = JSON.parse(body || '{}'); } catch (e) { throw new Error('Body JSON invalide'); }",
+                  "if (payload.cout != null && Number(payload.cout) < 0) throw new Error('cout >= 0');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         },
         {
           "name": "Delete entretien",
