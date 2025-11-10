@@ -7,6 +7,10 @@ const { validateEntretienCreate, validateEntretienUpdate } = require('../middl/v
 router.post('/', validateEntretienCreate, entretienController.addEntretien);
 // create by matricule (path param)
 router.post('/voiture/:matr', entretienController.addEntretienByMatr);
+// search, sort, statistics (non-breaking)
+router.get('/search', entretienController.searchEntretiens);
+router.get('/sort', entretienController.sortEntretiens);
+router.get('/stats', entretienController.statsEntretiens);
 // list all
 router.get('/', entretienController.getEntretiens);
 // list by car

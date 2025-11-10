@@ -7,6 +7,10 @@ const { validateVoitureCreate, validateVoitureUpdate } = require('../middl/valid
 router.post('/', validateVoitureCreate, voitureController.addVoiture);
 // debug echo body
 router.post('/echo', voitureController.echo);
+// search, sort, statistics (non-breaking)
+router.get('/search', voitureController.searchVoitures);
+router.get('/sort', voitureController.sortVoitures);
+router.get('/stats', voitureController.statsVoitures);
 // list
 router.get('/', voitureController.getVoitures);
 // get by plate number (matr) - place before :id to avoid conflict

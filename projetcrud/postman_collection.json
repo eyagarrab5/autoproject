@@ -9,7 +9,11 @@
     { "key": "voitureId", "value": "1", "type": "string" },
     { "key": "voitureMatr", "value": "PC-207-A", "type": "string" },
     { "key": "entretienId", "value": "1", "type": "string" },
-    { "key": "carId", "value": "1", "type": "string" }
+    { "key": "carId", "value": "1", "type": "string" },
+    { "key": "keepMatr", "value": "true", "type": "string" },
+    { "key": "manualMatr", "value": "", "type": "string" },
+    { "key": "createSecond", "value": "false", "type": "string" },
+    { "key": "lastMatr", "value": "", "type": "string" }
   ],
   "item": [
     {
@@ -23,7 +27,7 @@
             "url": { "raw": "{{baseUrl}}/voitures", "host": ["{{baseUrl}}"], "path": ["voitures"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"matr\": \"VV-309-B\",\n  \"marque\": \"Peugeot-SPORT\",\n  \"modele\": \"308\",\n  \"annee\": 2024,\n  \"carburant\": \"essence\",\n  \"kilometrage\": 12000,\n  \"etat\": \"available\",\n  \"tarifJournalier\": 75\n}"
+              "raw": "{\n  \"_id\": \"ZZ-321-AAB\",\n  \"marque\": \"Peugeot SPORT\",\n  \"modele\": \"308\",\n  \"annee\": 2024,\n  \"carburant\": \"essence\",\n  \"kilometrage\": 12000,\n  \"etat\": \"available\",\n  \"tarifJournalier\": 75\n}"
             }
           },
           "event": [
@@ -34,6 +38,24 @@
                   "const errs = [];",
                   "const raw = pm.request.body?.to?.raw ? pm.request.body.to.raw() : pm.request.body?.raw;",
                   "let payload = {}; try { payload = JSON.parse(raw || '{}'); } catch (e) { errs.push('Body JSON invalide'); }",
+                  "// Identifier handling: prefer manualMatr, else keep body _id when keepMatr=true, else auto-generate",
+                  "const makeMatr = () => { return ('CAR-' + Math.random().toString(36).slice(2,8) + '-' + Date.now()).toUpperCase(); };",
+                  "const keep = String(pm.variables.get('keepMatr') || '').toLowerCase() === 'true';",
+                  "const manual = pm.variables.get('manualMatr');",
+                  "let chosen = null;",
+                  "if (manual && String(manual).trim()) {",
+                  "  chosen = String(manual).trim().toUpperCase();",
+                  "} else if (keep && (payload._id || payload.matr)) {",
+                  "  chosen = String((payload._id || payload.matr)).trim().toUpperCase();",
+                  "} else {",
+                  "  chosen = makeMatr();",
+                  "}",
+                  "// Ensure both _id (for display) and matr (for backend validation) are set",
+                  "payload._id = chosen;",
+                  "payload.matr = chosen;",
+                  "pm.collectionVariables.set('lastMatr', payload.matr);",
+                  "pm.request.headers.upsert({ key: 'X-Debug-Matr', value: payload.matr });",
+                  "pm.request.body.update(JSON.stringify(payload, null, 2));",
                   "if (!pm.variables.get('baseUrl')) errs.push('baseUrl manquant');",
                   "if (!payload.matr || typeof payload.matr !== 'string') errs.push('matr requis');",
                   "if (!payload.marque) errs.push('marque requise');",
@@ -58,7 +80,35 @@
                   "let data = pm.response.json();",
                   "if (data && data._id) { pm.collectionVariables.set('voitureId', String(data._id)); }",
                   "if (data && data._id) { pm.collectionVariables.set('voitureMatr', String(data._id)); }",
-                  "console.log('voitureId set to', pm.collectionVariables.get('voitureId'));"
+                  "console.log('voitureId set to', pm.collectionVariables.get('voitureId'));",
+                  "// Création d'une 2ème voiture (optionnelle). Activez createSecond=true si besoin.",
+                  "if (String(pm.variables.get('createSecond')||'').toLowerCase()==='true') {",
+                  "  const baseUrl = pm.variables.get('baseUrl');",
+                  "  const makeMatr2 = () => { return ('CAR-' + Math.random().toString(36).slice(2,8) + '-' + Date.now()).toUpperCase(); };",
+                  "  const secondPayload = {",
+                  "    matr: makeMatr2(),",
+                  "    marque: 'CITROEN C3',",
+                  "    modele: 'Shine',",
+                  "    annee: 2021,",
+                  "    carburant: 'essence',",
+                  "    kilometrage: 9000,",
+                  "    etat: 'available',",
+                  "    tarifJournalier: 60",
+                  "  };",
+                  "  pm.sendRequest({",
+                  "    url: baseUrl + '/voitures',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json' },",
+                  "    body: { mode: 'raw', raw: JSON.stringify(secondPayload) }",
+                  "  }, (err, resp) => {",
+                  "    if (err) { console.warn('Second create error', err); return; }",
+                  "    try {",
+                  "      const d2 = resp.json();",
+                  "      if (d2 && d2._id) { pm.collectionVariables.set('voitureId2', String(d2._id)); pm.collectionVariables.set('voitureMatr2', String(d2._id)); }",
+                  "      console.log('voitureId2 set to', pm.collectionVariables.get('voitureId2'));",
+                  "    } catch(e) { console.warn('Second create parse error', e); }",
+                  "  });",
+                  "}"
                 ],
                 "type": "text/javascript"
               }
@@ -120,6 +170,70 @@
             "method": "DELETE",
             "url": { "raw": "{{baseUrl}}/voitures/{{voitureId}}", "host": ["{{baseUrl}}"], "path": ["voitures", "{{voitureId}}"] }
           }
+        },
+        {
+          "name": "Search voitures",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/voitures/search?marque=Renault&minAnnee=2015&q=clio",
+              "host": ["{{baseUrl}}"],
+              "path": ["voitures", "search"],
+              "query": [
+                {"key":"marque","value":"Renault"},
+                {"key":"minAnnee","value":"2015"},
+                {"key":"q","value":"clio"}
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {"exec": [
+                "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                "pm.test('Is array or object', function () { const j = pm.response.json(); pm.expect(typeof j === 'object').to.be.true; });"
+              ], "type": "text/javascript"}
+            }
+          ]
+        },
+        {
+          "name": "Sort voitures",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/voitures/sort?sort=tarifJournalier:desc,annee:asc",
+              "host": ["{{baseUrl}}"],
+              "path": ["voitures", "sort"],
+              "query": [
+                {"key":"sort","value":"tarifJournalier:desc,annee:asc"}
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {"exec": [
+                "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                "pm.test('Is array', function () { const j = pm.response.json(); pm.expect(Array.isArray(j)).to.be.true; });"
+              ], "type": "text/javascript"}
+            }
+          ]
+        },
+        {
+          "name": "Stats voitures",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/voitures/stats", "host": ["{{baseUrl}}"], "path": ["voitures", "stats"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {"exec": [
+                "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                "pm.test('Has facets', function () { const j = pm.response.json(); pm.expect(j).to.have.property('countByCarburant'); pm.expect(j).to.have.property('totals'); });"
+              ], "type": "text/javascript"}
+            }
+          ]
         }
       ]
     },
@@ -227,8 +341,74 @@
             "method": "DELETE",
             "url": { "raw": "{{baseUrl}}/entretiens/{{entretienId}}", "host": ["{{baseUrl}}"], "path": ["entretiens", "{{entretienId}}"] }
           }
+        },
+        {
+          "name": "Search entretiens",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/entretiens/search?type=routine&minCout=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["entretiens", "search"],
+              "query": [
+                {"key":"type","value":"routine"},
+                {"key":"minCout","value":"50"}
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {"exec": [
+                "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                "pm.test('Is array or object', function () { const j = pm.response.json(); pm.expect(typeof j === 'object').to.be.true; });"
+              ], "type": "text/javascript"}
+            }
+          ]
+        },
+        {
+          "name": "Sort entretiens",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/entretiens/sort?sort=date:desc,cout:asc",
+              "host": ["{{baseUrl}}"],
+              "path": ["entretiens", "sort"],
+              "query": [
+                {"key":"sort","value":"date:desc,cout:asc"}
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {"exec": [
+                "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                "pm.test('Is array', function () { const j = pm.response.json(); pm.expect(Array.isArray(j)).to.be.true; });"
+              ], "type": "text/javascript"}
+            }
+          ]
+        },
+        {
+          "name": "Stats entretiens",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/entretiens/stats", "host": ["{{baseUrl}}"], "path": ["entretiens", "stats"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {"exec": [
+                "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                "pm.test('Has facets', function () { const j = pm.response.json(); pm.expect(j).to.have.property('countByType'); pm.expect(j).to.have.property('totals'); });"
+              ], "type": "text/javascript"}
+            }
+          ]
         }
       ]
     }
   ]
 }
+
+
+
