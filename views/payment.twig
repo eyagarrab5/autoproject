@@ -1,0 +1,179 @@
+
+<!doctype html>
+<html lang="fr">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Paiements</title>
+		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+	</head>
+	<body class="bg-light">
+		<div class="container py-4">
+			<div class="d-flex justify-content-between align-items-center mb-3">
+				<h1 class="h3">Gestion des paiements</h1>
+				<small class="text-muted">Interface minimale pour créer et voir les paiements</small>
+			</div>
+
+			<div class="card mb-4">
+				<div class="card-body">
+					<h5 class="card-title">Créer un paiement</h5>
+					<form id="paymentForm" class="row g-3">
+						<div class="col-md-4">
+							<label for="userId" class="form-label">User ID</label>
+							<input type="text" id="userId" class="form-control" required />
+						</div>
+						<div class="col-md-4">
+							<label for="orderId" class="form-label">Order ID</label>
+							<input type="text" id="orderId" class="form-control" required />
+						</div>
+						<div class="col-md-2">
+							<label for="amount" class="form-label">Montant</label>
+							<input type="number" step="0.01" id="amount" class="form-control" required />
+						</div>
+						<div class="col-md-2">
+							<label for="paymentMethod" class="form-label">Méthode</label>
+							<select id="paymentMethod" class="form-select">
+								<option value="card">Carte</option>
+								<option value="paypal">PayPal</option>
+								<option value="cash">Espèces</option>
+							</select>
+						</div>
+
+						<div class="col-md-3">
+							<label for="paymentStatus" class="form-label">Statut</label>
+							<select id="paymentStatus" class="form-select">
+								<option value="pending">En attente</option>
+								<option value="completed">Complété</option>
+								<option value="failed">Échoué</option>
+							</select>
+						</div>
+
+						<div class="col-12">
+							<button type="submit" class="btn btn-primary">Créer le paiement</button>
+							<button type="button" id="refreshBtn" class="btn btn-secondary ms-2">Actualiser la liste</button>
+						</div>
+					</form>
+				</div>
+			</div>
+
+			<div class="card">
+				<div class="card-body">
+					<h5 class="card-title">Liste des paiements</h5>
+					<div class="table-responsive">
+						<table class="table table-sm table-striped" id="paymentsTable">
+							<thead>
+								<tr>
+									<th>ID</th>
+									<th>User</th>
+									<th>Order</th>
+									<th>Montant</th>
+									<th>Méthode</th>
+									<th>Statut</th>
+									<th>Créé le</th>
+									<th>Actions</th>
+								</tr>
+							</thead>
+							<tbody></tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<script>
+			const apiBase = '/payment';
+
+			async function fetchPayments() {
+				try {
+					const res = await fetch(apiBase);
+					if (!res.ok) {
+						throw new Error(`HTTP error! status: ${res.status}`);
+					}
+					const list = await res.json();
+					const tbody = document.querySelector('#paymentsTable tbody');
+					tbody.innerHTML = '';
+					list.forEach(p => {
+						const tr = document.createElement('tr');
+						tr.innerHTML = `
+							<td>${p._id}</td>
+							<td>${p.userId || ''}</td>
+							<td>${p.orderId || ''}</td>
+							<td>${p.amount ?? ''}</td>
+							<td>${p.paymentMethod || ''}</td>
+							<td>${p.paymentStatus || ''}</td>
+							<td>${p.createdAt ? new Date(p.createdAt).toLocaleString() : ''}</td>
+							<td>
+								<button class="btn btn-sm btn-success" data-id="${p._id}" data-action="complete">Valider</button>
+								<button class="btn btn-sm btn-danger ms-1" data-id="${p._id}" data-action="delete">Supprimer</button>
+							</td>
+						`;
+						tbody.appendChild(tr);
+					});
+				} catch (err) {
+					console.error('Fetch error:', err);
+					alert('Erreur lors de la récupération des paiements: ' + err.message);
+				}
+			}
+
+			document.getElementById('paymentForm').addEventListener('submit', async (e) => {
+				e.preventDefault();
+				const payload = {
+					userId: document.getElementById('userId').value,
+					orderId: document.getElementById('orderId').value,
+					amount: parseFloat(document.getElementById('amount').value),
+					paymentMethod: document.getElementById('paymentMethod').value,
+					paymentStatus: document.getElementById('paymentStatus').value
+				};
+				try {
+					const res = await fetch(apiBase, {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify(payload)
+					});
+					if (!res.ok) throw new Error('Création échouée');
+					document.getElementById('paymentForm').reset();
+					await fetchPayments();
+				} catch (err) {
+					console.error(err);
+					alert('Erreur lors de la création du paiement');
+				}
+			});
+
+			document.getElementById('refreshBtn').addEventListener('click', fetchPayments);
+
+			document.querySelector('#paymentsTable tbody').addEventListener('click', async (e) => {
+				const btn = e.target.closest('button');
+				if (!btn) return;
+				const id = btn.dataset.id;
+				const action = btn.dataset.action;
+				if (action === 'delete') {
+					if (!confirm('Supprimer ce paiement ?')) return;
+					try {
+						const res = await fetch(`${apiBase}/${id}`, { method: 'DELETE' });
+						if (!res.ok) throw new Error('Suppression échouée');
+						await fetchPayments();
+					} catch (err) {
+						console.error(err);
+						alert('Erreur suppression');
+					}
+				} else if (action === 'complete') {
+					try {
+						const res = await fetch(`${apiBase}/${id}`, {
+							method: 'PUT',
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify({ paymentStatus: 'completed' })
+						});
+						if (!res.ok) throw new Error('Mise à jour échouée');
+						await fetchPayments();
+					} catch (err) {
+						console.error(err);
+						alert('Erreur mise à jour');
+					}
+				}
+			});
+
+			// load on start
+			fetchPayments();
+		</script>
+	</body>
+</html>

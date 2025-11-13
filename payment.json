@@ -1,0 +1,29 @@
+[
+  {
+    "_id": "6734f8b25a3f5f0012a3a9c1",
+    "userId": "6734f7aa5a3f5f0012a3a9b2",
+    "orderId": "6734f7cc5a3f5f0012a3a9b3",
+    "amount": 149.99,
+    "paymentMethod": "card",
+    "paymentStatus": "completed",
+    "createdAt": "2025-11-13T12:00:00.000Z"
+  },
+  {
+    "_id": "6734f8b25a3f5f0012a3a9c2",
+    "userId": "6734f7aa5a3f5f0012a3a9b4",
+    "orderId": "6734f7cc5a3f5f0012a3a9b5",
+    "amount": 89.50,
+    "paymentMethod": "paypal",
+    "paymentStatus": "pending",
+    "createdAt": "2025-11-13T12:30:00.000Z"
+  },
+  {
+    "_id": "6734f8b25a3f5f0012a3a9c3",
+    "userId": "6734f7aa5a3f5f0012a3a9b6",
+    "orderId": "6734f7cc5a3f5f0012a3a9b7",
+    "amount": 299.00,
+    "paymentMethod": "bank_transfer",
+    "paymentStatus": "failed",
+    "createdAt": "2025-11-13T13:00:00.000Z"
+  }
+]
