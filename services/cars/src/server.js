@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const connectDB = require('./config/database');
+const mongoose = require('mongoose');
 const axios = require('axios');
 
 // Load environment variables
@@ -11,7 +11,10 @@ dotenv.config();
 const app = express();
 
 // Connect to MongoDB
-connectDB();
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://mongodb:27017/carsdb';
+mongoose.connect(MONGODB_URI)
+  .then(() => console.log('Cars Service: Database connected'))
+  .catch((err) => console.error('Cars Service: Database connection error:', err));
 
 // Middleware
 app.use(cors());
@@ -19,15 +22,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
-app.use('/auth', require('./routes/auth.routes'));
-app.use('/users', require('./routes/user.routes'));
-app.use('/profile', require('./routes/profile.routes'));
-app.use('/activity', require('./routes/activity.routes'));
-app.use('/login-history', require('./routes/loginHistory.routes'));
+app.use('/voitures', require('./routes/voiture.routes'));
+app.use('/entretiens', require('./routes/entretien.routes'));
 
 // Health check route
 app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'OK', message: 'Server is running' }); 
+  res.status(200).json({ status: 'OK', service: 'cars-service', message: 'Server is running' });
 });
 
 // Error handling middleware
@@ -41,16 +41,16 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3002;
 const DISCOVERY_URL = process.env.DISCOVERY_URL || 'http://discovery:3000';
-const SERVICE_NAME = 'auth-service';
-// In Docker, the hostname is the service name. We assume 'auth' is the service name in docker-compose.
-const SERVICE_URL = process.env.SERVICE_URL || `http://auth:${PORT}`;
+const SERVICE_NAME = 'cars-service';
+const SERVICE_URL = process.env.SERVICE_URL || `http://cars:${PORT}`;
 
 app.listen(PORT, async () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`Cars Service is running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV}`);
 
+  // Register with Discovery Service
   try {
     await axios.post(`${DISCOVERY_URL}/register`, {
       serviceName: SERVICE_NAME,

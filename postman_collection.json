@@ -1,7 +1,7 @@
-{
+﻿{
   "info": {
-    "name": "User Auth & CRUD API",
-    "description": "Complete API collection for user authentication and CRUD operations with Express.js and MongoDB",
+    "name": "Car Rental Microservices API",
+    "description": "Complete API collection for car rental microservices: Auth, Cars, and Payment services with Express.js and MongoDB",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "12345678"
   },
@@ -28,6 +28,21 @@
     },
     {
       "key": "resetToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "voitureId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "entretienId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "paymentId",
       "value": "",
       "type": "string"
     }
@@ -69,16 +84,62 @@
           "response": []
         },
         {
+          "name": "Get Cars Service Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/cars-service",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["cars-service"]
+            },
+            "description": "Get details for cars-service from Discovery Service"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Payment Service Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/payment-service",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["payment-service"]
+            },
+            "description": "Get details for payment-service from Discovery Service"
+          },
+          "response": []
+        },
+        {
           "name": "Gateway Health Check",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/health",
+              "raw": "{{baseUrl}}/health",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "health"]
+              "path": ["health"]
             },
-            "description": "Check if the Gateway is correctly routing to Auth Service"
+            "description": "Check if the Gateway is running"
+          },
+          "response": []
+        },
+        {
+          "name": "Gateway Services List",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/services",
+              "host": ["{{baseUrl}}"],
+              "path": ["services"]
+            },
+            "description": "Get all registered services through Gateway"
           },
           "response": []
         }
@@ -139,9 +200,9 @@
               "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"user\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/auth/register",
+              "raw": "{{baseUrl}}/auth/register",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "register"]
+              "path": ["auth", "register"]
             },
             "description": "Register a new user account"
           },
@@ -177,9 +238,9 @@
               "raw": "{\n  \"name\": \"Admin User\",\n  \"email\": \"admin@example.com\",\n  \"password\": \"admin123\",\n  \"role\": \"admin\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/auth/register",
+              "raw": "{{baseUrl}}/auth/register",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "register"]
+              "path": ["auth", "register"]
             },
             "description": "Register a new admin user account"
           },
@@ -215,9 +276,9 @@
               "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/auth/login",
+              "raw": "{{baseUrl}}/auth/login",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "login"]
+              "path": ["auth", "login"]
             },
             "description": "Login with email and password"
           },
@@ -253,9 +314,9 @@
               "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"admin123\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/auth/login",
+              "raw": "{{baseUrl}}/auth/login",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "login"]
+              "path": ["auth", "login"]
             },
             "description": "Login as admin with email and password"
           },
@@ -272,9 +333,9 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/auth/me",
+              "raw": "{{baseUrl}}/auth/me",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "me"]
+              "path": ["auth", "me"]
             },
             "description": "Get currently logged in user information"
           },
@@ -299,9 +360,9 @@
               "raw": "{\n  \"currentPassword\": \"password123\",\n  \"newPassword\": \"newpassword123\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/auth/updatepassword",
+              "raw": "{{baseUrl}}/auth/updatepassword",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "updatepassword"]
+              "path": ["auth", "updatepassword"]
             },
             "description": "Update user password (requires current password)"
           },
@@ -344,9 +405,9 @@
               "raw": "{\n  \"email\": \"john@example.com\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/auth/forgot-password",
+              "raw": "{{baseUrl}}/auth/forgot-password",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "forgot-password"]
+              "path": ["auth", "forgot-password"]
             },
             "description": "Request a password reset token. An email will be sent with reset instructions."
           },
@@ -358,9 +419,9 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/auth/verify-reset-token/{{resetToken}}",
+              "raw": "{{baseUrl}}/auth/verify-reset-token/{{resetToken}}",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "verify-reset-token", "{{resetToken}}"]
+              "path": ["auth", "verify-reset-token", "{{resetToken}}"]
             },
             "description": "Verify if a reset token is valid and not expired"
           },
@@ -381,9 +442,9 @@
               "raw": "{\n  \"token\": \"{{resetToken}}\",\n  \"newPassword\": \"newpassword123\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/auth/reset-password",
+              "raw": "{{baseUrl}}/auth/reset-password",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "reset-password"]
+              "path": ["auth", "reset-password"]
             },
             "description": "Reset password using the token received via email"
           },
@@ -400,9 +461,9 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/auth/reset-tokens/{{userId}}",
+              "raw": "{{baseUrl}}/auth/reset-tokens/{{userId}}",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "reset-tokens", "{{userId}}"]
+              "path": ["auth", "reset-tokens", "{{userId}}"]
             },
             "description": "Get all reset tokens for a specific user (Admin only)"
           },
@@ -419,9 +480,9 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/auth/reset-tokens/cleanup",
+              "raw": "{{baseUrl}}/auth/reset-tokens/cleanup",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "reset-tokens", "cleanup"]
+              "path": ["auth", "reset-tokens", "cleanup"]
             },
             "description": "Delete all expired and used reset tokens (Admin only)"
           },
@@ -444,9 +505,9 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/users",
+              "raw": "{{baseUrl}}/users",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "users"]
+              "path": ["users"]
             },
             "description": "Get all users (Admin only)"
           },
@@ -463,9 +524,9 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/users/{{userId}}",
+              "raw": "{{baseUrl}}/users/{{userId}}",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "users", "{{userId}}"]
+              "path": ["users", "{{userId}}"]
             },
             "description": "Get a specific user by ID (Admin only)"
           },
@@ -505,9 +566,9 @@
               "raw": "{\n  \"name\": \"Jane Smith\",\n  \"email\": \"jane@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"user\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/users",
+              "raw": "{{baseUrl}}/users",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "users"]
+              "path": ["users"]
             },
             "description": "Create a new user (Admin only)"
           },
@@ -532,9 +593,9 @@
               "raw": "{\n  \"name\": \"Jane Doe Updated\",\n  \"email\": \"janeupdated@example.com\",\n  \"role\": \"admin\",\n  \"isActive\": true\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/users/{{userId}}",
+              "raw": "{{baseUrl}}/users/{{userId}}",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "users", "{{userId}}"]
+              "path": ["users", "{{userId}}"]
             },
             "description": "Update user information (Admin only)"
           },
@@ -559,9 +620,9 @@
               "raw": "{\n  \"isActive\": false\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/users/{{userId}}",
+              "raw": "{{baseUrl}}/users/{{userId}}",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "users", "{{userId}}"]
+              "path": ["users", "{{userId}}"]
             },
             "description": "Deactivate a user account (Admin only)"
           },
@@ -578,9 +639,9 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/users/{{userId}}",
+              "raw": "{{baseUrl}}/users/{{userId}}",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "users", "{{userId}}"]
+              "path": ["users", "{{userId}}"]
             },
             "description": "Delete a user permanently (Admin only)"
           },
@@ -603,9 +664,9 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/profile/me",
+              "raw": "{{baseUrl}}/profile/me",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "profile", "me"]
+              "path": ["profile", "me"]
             },
             "description": "Get current user's profile"
           },
@@ -630,9 +691,9 @@
               "raw": "{\n  \"bio\": \"Full-stack developer passionate about building scalable applications\",\n  \"avatar\": \"https://example.com/avatar.jpg\",\n  \"phone\": \"+1234567890\",\n  \"dateOfBirth\": \"1990-01-15\",\n  \"gender\": \"male\",\n  \"address\": {\n    \"street\": \"123 Main St\",\n    \"city\": \"New York\",\n    \"state\": \"NY\",\n    \"country\": \"USA\",\n    \"zipCode\": \"10001\"\n  },\n  \"socialLinks\": {\n    \"linkedin\": \"https://linkedin.com/in/johndoe\",\n    \"twitter\": \"https://twitter.com/johndoe\",\n    \"github\": \"https://github.com/johndoe\",\n    \"website\": \"https://johndoe.com\"\n  },\n  \"preferences\": {\n    \"language\": \"en\",\n    \"timezone\": \"America/New_York\",\n    \"notifications\": {\n      \"email\": true,\n      \"sms\": false,\n      \"push\": true\n    }\n  }\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/profile/me",
+              "raw": "{{baseUrl}}/profile/me",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "profile", "me"]
+              "path": ["profile", "me"]
             },
             "description": "Create or update current user's profile"
           },
@@ -657,9 +718,9 @@
               "raw": "{\n  \"bio\": \"Updated bio text\",\n  \"phone\": \"+9876543210\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/profile/me",
+              "raw": "{{baseUrl}}/profile/me",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "profile", "me"]
+              "path": ["profile", "me"]
             },
             "description": "Update only specific fields of current user's profile"
           },
@@ -676,9 +737,9 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/profile/me",
+              "raw": "{{baseUrl}}/profile/me",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "profile", "me"]
+              "path": ["profile", "me"]
             },
             "description": "Delete current user's profile"
           },
@@ -701,9 +762,9 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/profile",
+              "raw": "{{baseUrl}}/profile",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "profile"]
+              "path": ["profile"]
             },
             "description": "Get all user profiles (Admin only)"
           },
@@ -720,9 +781,9 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/profile/user/{{userId}}",
+              "raw": "{{baseUrl}}/profile/user/{{userId}}",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "profile", "user", "{{userId}}"]
+              "path": ["profile", "user", "{{userId}}"]
             },
             "description": "Get profile for a specific user (Admin only)"
           },
@@ -747,9 +808,9 @@
               "raw": "{\n  \"bio\": \"Admin created profile\",\n  \"avatar\": \"https://example.com/default-avatar.jpg\",\n  \"phone\": \"+1111111111\",\n  \"gender\": \"female\",\n  \"address\": {\n    \"city\": \"San Francisco\",\n    \"state\": \"CA\",\n    \"country\": \"USA\"\n  }\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/profile/user/{{userId}}",
+              "raw": "{{baseUrl}}/profile/user/{{userId}}",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "profile", "user", "{{userId}}"]
+              "path": ["profile", "user", "{{userId}}"]
             },
             "description": "Create profile for a specific user (Admin only)"
           },
@@ -774,9 +835,9 @@
               "raw": "{\n  \"bio\": \"Updated by admin\",\n  \"preferences\": {\n    \"language\": \"es\",\n    \"timezone\": \"Europe/Madrid\"\n  }\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/profile/user/{{userId}}",
+              "raw": "{{baseUrl}}/profile/user/{{userId}}",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "profile", "user", "{{userId}}"]
+              "path": ["profile", "user", "{{userId}}"]
             },
             "description": "Update profile for a specific user (Admin only)"
           },
@@ -793,9 +854,9 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/profile/user/{{userId}}",
+              "raw": "{{baseUrl}}/profile/user/{{userId}}",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "profile", "user", "{{userId}}"]
+              "path": ["profile", "user", "{{userId}}"]
             },
             "description": "Delete profile for a specific user (Admin only)"
           },
@@ -818,9 +879,9 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/activity/me?page=1&limit=20",
+              "raw": "{{baseUrl}}/activity/me?page=1&limit=20",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "activity", "me"],
+              "path": ["activity", "me"],
               "query": [
                 {
                   "key": "page",
@@ -847,9 +908,9 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/activity?page=1&limit=50",
+              "raw": "{{baseUrl}}/activity?page=1&limit=50",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "activity"],
+              "path": ["activity"],
               "query": [
                 {
                   "key": "page",
@@ -896,9 +957,9 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/activity/stats",
+              "raw": "{{baseUrl}}/activity/stats",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "activity", "stats"]
+              "path": ["activity", "stats"]
             },
             "description": "Get activity statistics and analytics (Admin only)"
           },
@@ -915,9 +976,9 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/activity/cleanup?days=180",
+              "raw": "{{baseUrl}}/activity/cleanup?days=180",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "activity", "cleanup"],
+              "path": ["activity", "cleanup"],
               "query": [
                 {
                   "key": "days",
@@ -946,9 +1007,9 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/login-history/me?page=1&limit=20",
+              "raw": "{{baseUrl}}/login-history/me?page=1&limit=20",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "login-history", "me"],
+              "path": ["login-history", "me"],
               "query": [
                 {
                   "key": "page",
@@ -975,9 +1036,9 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/login-history?page=1&limit=50",
+              "raw": "{{baseUrl}}/login-history?page=1&limit=50",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "login-history"],
+              "path": ["login-history"],
               "query": [
                 {
                   "key": "page",
@@ -1024,9 +1085,9 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/login-history/stats",
+              "raw": "{{baseUrl}}/login-history/stats",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "login-history", "stats"]
+              "path": ["login-history", "stats"]
             },
             "description": "Get login statistics with device, browser, and OS breakdown (Admin only)"
           },
@@ -1043,9 +1104,9 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/login-history/active-sessions",
+              "raw": "{{baseUrl}}/login-history/active-sessions",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "login-history", "active-sessions"]
+              "path": ["login-history", "active-sessions"]
             },
             "description": "Get all active user sessions (Admin only)"
           },
@@ -1062,9 +1123,9 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/login-history/cleanup?days=90",
+              "raw": "{{baseUrl}}/login-history/cleanup?days=90",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "login-history", "cleanup"],
+              "path": ["login-history", "cleanup"],
               "query": [
                 {
                   "key": "days",
@@ -1097,9 +1158,9 @@
               "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"user\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/auth/register",
+              "raw": "{{baseUrl}}/auth/register",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "register"]
+              "path": ["auth", "register"]
             },
             "description": "Try to register with an existing email (should return 400 error)"
           },
@@ -1120,9 +1181,9 @@
               "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"wrongpassword\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/auth/login",
+              "raw": "{{baseUrl}}/auth/login",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "login"]
+              "path": ["auth", "login"]
             },
             "description": "Try to login with wrong password (should return 401 error)"
           },
@@ -1134,9 +1195,9 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/auth/me",
+              "raw": "{{baseUrl}}/auth/me",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "me"]
+              "path": ["auth", "me"]
             },
             "description": "Try to access protected route without token (should return 401 error)"
           },
@@ -1153,9 +1214,9 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/users",
+              "raw": "{{baseUrl}}/users",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "users"]
+              "path": ["users"]
             },
             "description": "Try to access admin route with user token (should return 403 error)"
           },
@@ -1172,9 +1233,9 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/users/invalidid123",
+              "raw": "{{baseUrl}}/users/invalidid123",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "users", "invalidid123"]
+              "path": ["users", "invalidid123"]
             },
             "description": "Try to get user with invalid ID (should return 404 error)"
           },
@@ -1182,6 +1243,951 @@
         }
       ],
       "description": "Test error handling scenarios"
+    },
+    {
+      "name": "Cars - Voitures",
+      "item": [
+        {
+          "name": "Get All Voitures",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/voitures",
+              "host": ["{{baseUrl}}"],
+              "path": ["voitures"]
+            },
+            "description": "Get all cars (public access)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Voiture by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/voitures/{{voitureId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["voitures", "{{voitureId}}"]
+            },
+            "description": "Get a specific car by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Voiture by Matricule",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/voitures/plate/ABC123",
+              "host": ["{{baseUrl}}"],
+              "path": ["voitures", "plate", "ABC123"]
+            },
+            "description": "Get a car by license plate (matricule)"
+          },
+          "response": []
+        },
+        {
+          "name": "Search Voitures",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/voitures/search?marque=Toyota&etat=available",
+              "host": ["{{baseUrl}}"],
+              "path": ["voitures", "search"],
+              "query": [
+                {
+                  "key": "marque",
+                  "value": "Toyota"
+                },
+                {
+                  "key": "modele",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "carburant",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "etat",
+                  "value": "available"
+                },
+                {
+                  "key": "minAnnee",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "maxAnnee",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "minTarif",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "maxTarif",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "q",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Search cars with various filters"
+          },
+          "response": []
+        },
+        {
+          "name": "Sort Voitures",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/voitures/sort?sort=tarifJournalier:asc",
+              "host": ["{{baseUrl}}"],
+              "path": ["voitures", "sort"],
+              "query": [
+                {
+                  "key": "sort",
+                  "value": "tarifJournalier:asc"
+                }
+              ]
+            },
+            "description": "Get sorted list of cars"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Voitures Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/voitures/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["voitures", "stats"]
+            },
+            "description": "Get car statistics (count by fuel type, status, pricing stats)"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Voiture",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set(\"voitureId\", jsonData._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"matr\": \"ABC123\",\n  \"marque\": \"Toyota\",\n  \"modele\": \"Corolla\",\n  \"annee\": 2022,\n  \"carburant\": \"essence\",\n  \"kilometrage\": 25000,\n  \"etat\": \"available\",\n  \"tarifJournalier\": 50\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/voitures",
+              "host": ["{{baseUrl}}"],
+              "path": ["voitures"]
+            },
+            "description": "Create a new car (requires authentication)"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Voiture",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"etat\": \"rented\",\n  \"kilometrage\": 26000,\n  \"tarifJournalier\": 55\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/voitures/{{voitureId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["voitures", "{{voitureId}}"]
+            },
+            "description": "Update a car (requires authentication)"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Voiture",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/voitures/{{voitureId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["voitures", "{{voitureId}}"]
+            },
+            "description": "Delete a car (requires authentication)"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Voiture by Matricule",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/voitures/plate/ABC123",
+              "host": ["{{baseUrl}}"],
+              "path": ["voitures", "plate", "ABC123"]
+            },
+            "description": "Delete a car by license plate (requires authentication)"
+          },
+          "response": []
+        }
+      ],
+      "description": "Car (Voiture) management endpoints"
+    },
+    {
+      "name": "Cars - Entretiens",
+      "item": [
+        {
+          "name": "Get All Entretiens",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/entretiens",
+              "host": ["{{baseUrl}}"],
+              "path": ["entretiens"]
+            },
+            "description": "Get all maintenance records"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Entretien by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/entretiens/{{entretienId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["entretiens", "{{entretienId}}"]
+            },
+            "description": "Get a specific maintenance record"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Entretiens by Car",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/entretiens/car/{{voitureId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["entretiens", "car", "{{voitureId}}"]
+            },
+            "description": "Get all maintenance records for a specific car"
+          },
+          "response": []
+        },
+        {
+          "name": "Search Entretiens",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/entretiens/search?type=routine",
+              "host": ["{{baseUrl}}"],
+              "path": ["entretiens", "search"],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "routine"
+                },
+                {
+                  "key": "car",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "minCout",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "maxCout",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "startDate",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "endDate",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Search maintenance records with filters"
+          },
+          "response": []
+        },
+        {
+          "name": "Sort Entretiens",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/entretiens/sort?sort=date:desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["entretiens", "sort"],
+              "query": [
+                {
+                  "key": "sort",
+                  "value": "date:desc"
+                }
+              ]
+            },
+            "description": "Get sorted list of maintenance records"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Entretiens Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/entretiens/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["entretiens", "stats"]
+            },
+            "description": "Get maintenance statistics"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Entretien",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set(\"entretienId\", jsonData._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"car\": \"ABC123\",\n  \"type\": \"routine\",\n  \"date\": \"2025-11-27\",\n  \"description\": \"Oil change and filter replacement\",\n  \"cout\": 150,\n  \"piecesReconditionneesPct\": 20,\n  \"dechetsKg\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/entretiens",
+              "host": ["{{baseUrl}}"],
+              "path": ["entretiens"]
+            },
+            "description": "Create a new maintenance record (requires authentication)"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Entretien by Matricule",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"inspection\",\n  \"date\": \"2025-11-27\",\n  \"description\": \"Annual inspection\",\n  \"cout\": 80\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/entretiens/voiture/ABC123",
+              "host": ["{{baseUrl}}"],
+              "path": ["entretiens", "voiture", "ABC123"]
+            },
+            "description": "Create maintenance record by car matricule (requires authentication)"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Entretien",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Updated maintenance description\",\n  \"cout\": 175\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/entretiens/{{entretienId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["entretiens", "{{entretienId}}"]
+            },
+            "description": "Update a maintenance record (requires authentication)"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Entretien",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/entretiens/{{entretienId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["entretiens", "{{entretienId}}"]
+            },
+            "description": "Delete a maintenance record (requires authentication)"
+          },
+          "response": []
+        }
+      ],
+      "description": "Maintenance (Entretien) management endpoints"
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "Test Payment API",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payments/test",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments", "test"]
+            },
+            "description": "Test if Payment API is working"
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Payments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments", "me"]
+            },
+            "description": "Get current user's payments (requires authentication)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Payments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments"]
+            },
+            "description": "Get all payments (requires authentication)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Payment by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments/id/{{paymentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments", "id", "{{paymentId}}"]
+            },
+            "description": "Get a specific payment by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Payments by User ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments/user/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments", "user", "{{userId}}"]
+            },
+            "description": "Get all payments for a specific user"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Payments by Order ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments/order/ORDER123",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments", "order", "ORDER123"]
+            },
+            "description": "Get all payments for a specific order"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Payments by Method",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments/method/credit_card",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments", "method", "credit_card"]
+            },
+            "description": "Get payments by payment method"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Payments by Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments/status/completed",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments", "status", "completed"]
+            },
+            "description": "Get payments by status"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Recent Payments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments/recent/list?limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments", "recent", "list"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get most recent payments"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Payments in Date Range",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments/daterange/list?startDate=2025-01-01&endDate=2025-12-31",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments", "daterange", "list"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2025-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2025-12-31"
+                }
+              ]
+            },
+            "description": "Get payments within a date range"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Payment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set(\"paymentId\", jsonData.data._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"ORDER123\",\n  \"amount\": 150.00,\n  \"paymentMethod\": \"credit_card\",\n  \"paymentStatus\": \"pending\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/payments",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments"]
+            },
+            "description": "Create a new payment (requires authentication)"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Payment Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentStatus\": \"completed\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/payments/{{paymentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments", "{{paymentId}}"]
+            },
+            "description": "Update payment status (requires authentication)"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Payment",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments/{{paymentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments", "{{paymentId}}"]
+            },
+            "description": "Delete a payment (requires authentication)"
+          },
+          "response": []
+        }
+      ],
+      "description": "Payment management endpoints"
+    },
+    {
+      "name": "Payment Statistics",
+      "item": [
+        {
+          "name": "Get Total Amount",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payments/stats/total",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments", "stats", "total"]
+            },
+            "description": "Get total payments amount"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Total Count",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payments/stats/count",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments", "stats", "count"]
+            },
+            "description": "Get total payments count"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Average Amount",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payments/stats/average",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments", "stats", "average"]
+            },
+            "description": "Get average payment amount"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Methods Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payments/stats/methods",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments", "stats", "methods"]
+            },
+            "description": "Get payment methods statistics"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Status Breakdown",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payments/stats/status-breakdown",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments", "stats", "status-breakdown"]
+            },
+            "description": "Get payments breakdown by status"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Monthly Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payments/stats/monthly",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments", "stats", "monthly"]
+            },
+            "description": "Get monthly payment statistics"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Yearly Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payments/stats/yearly",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments", "stats", "yearly"]
+            },
+            "description": "Get yearly payment statistics"
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Payment History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments/history/user/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments", "history", "user", "{{userId}}"]
+            },
+            "description": "Get payment history for a user"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Order Payment History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments/history/order/ORDER123",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments", "history", "order", "ORDER123"]
+            },
+            "description": "Get payment history for an order"
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Payment Count",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments/count/user/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments", "count", "user", "{{userId}}"]
+            },
+            "description": "Get total payment count for a user"
+          },
+          "response": []
+        }
+      ],
+      "description": "Payment statistics and analytics endpoints"
     }
   ]
 }
+
+

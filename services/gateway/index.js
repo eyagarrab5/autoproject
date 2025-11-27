@@ -19,23 +19,52 @@ async function getServiceUrl(serviceName) {
 
 // Proxy middleware factory
 const createServiceProxy = (serviceName) => {
-    return async (req, res, next) => {
-        const serviceUrl = await getServiceUrl(serviceName);
-        if (!serviceUrl) {
-            return res.status(503).json({ message: `${serviceName} unavailable` });
-        }
-        
-        createProxyMiddleware({
-            target: serviceUrl,
-            changeOrigin: true,
-            // We don't rewrite path because the auth service expects /api/...
-        })(req, res, next);
-    };
+  return async (req, res, next) => {
+    const serviceUrl = await getServiceUrl(serviceName);
+    if (!serviceUrl) {
+      return res.status(503).json({ message: `${serviceName} unavailable` });
+    }
+    
+    createProxyMiddleware({
+      target: serviceUrl,
+      changeOrigin: true,
+    })(req, res, next);
+  };
 };
 
-// Route all /api traffic to auth-service for now, as it contains all logic
-app.use('/api', createServiceProxy('auth-service'));
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ status: 'OK', service: 'gateway', message: 'Gateway is running' });
+});
+
+// List all registered services
+app.get('/services', async (req, res) => {
+  try {
+    const response = await axios.get(DISCOVERY_URL);
+    res.json({ services: response.data });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch services', error: error.message });
+  }
+});
+
+// Route auth-related endpoints to auth-service
+app.use('/auth', createServiceProxy('auth-service'));
+app.use('/users', createServiceProxy('auth-service'));
+app.use('/profile', createServiceProxy('auth-service'));
+app.use('/activity', createServiceProxy('auth-service'));
+app.use('/login-history', createServiceProxy('auth-service'));
+
+// Route cars-related endpoints to cars-service
+app.use('/voitures', createServiceProxy('cars-service'));
+app.use('/entretiens', createServiceProxy('cars-service'));
+
+// Route payment-related endpoints to payment-service
+app.use('/payments', createServiceProxy('payment-service'));
 
 app.listen(PORT, () => {
   console.log(`Gateway running on port ${PORT}`);
+  console.log('Routes configured:');
+  console.log('  - /auth, /users, /profile, /activity, /login-history -> auth-service');
+  console.log('  - /voitures, /entretiens -> cars-service');
+  console.log('  - /payments -> payment-service');
 });

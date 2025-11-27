@@ -36,6 +36,9 @@ services:
       - DISCOVERY_URL=http://discovery:3000
     depends_on:
       - discovery
+      - auth
+      - cars
+      - payment
     networks:
       - app-network
 
@@ -45,17 +48,65 @@ services:
       context: ./services/auth
     container_name: auth-service
     restart: unless-stopped
+    ports:
+      - "3001:3001"
     environment:
       - NODE_ENV=production
-      - PORT=3000
+      - PORT=3001
       - MONGODB_URI=mongodb://mongodb:27017/userdb
       - JWT_SECRET=your_jwt_secret_key_change_this_in_production
       - JWT_EXPIRE=7d
       - DISCOVERY_URL=http://discovery:3000
-      - SERVICE_URL=http://auth:3000
+      - SERVICE_URL=http://auth:3001
     depends_on:
       - mongodb
       - discovery
+    networks:
+      - app-network
+
+  # Cars Service
+  cars:
+    build:
+      context: ./services/cars
+    container_name: cars-service
+    restart: unless-stopped
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=production
+      - PORT=3002
+      - MONGODB_URI=mongodb://mongodb:27017/carsdb
+      - JWT_SECRET=your_jwt_secret_key_change_this_in_production
+      - DISCOVERY_URL=http://discovery:3000
+      - SERVICE_URL=http://cars:3002
+      - AUTH_SERVICE_URL=http://auth:3001
+    depends_on:
+      - mongodb
+      - discovery
+      - auth
+    networks:
+      - app-network
+
+  # Payment Service
+  payment:
+    build:
+      context: ./services/payment
+    container_name: payment-service
+    restart: unless-stopped
+    ports:
+      - "3003:3003"
+    environment:
+      - NODE_ENV=production
+      - PORT=3003
+      - MONGODB_URI=mongodb://mongodb:27017/paymentdb
+      - JWT_SECRET=your_jwt_secret_key_change_this_in_production
+      - DISCOVERY_URL=http://discovery:3000
+      - SERVICE_URL=http://payment:3003
+      - AUTH_SERVICE_URL=http://auth:3001
+    depends_on:
+      - mongodb
+      - discovery
+      - auth
     networks:
       - app-network
 
