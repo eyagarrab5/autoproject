@@ -8,7 +8,7 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:3000",
+      "value": "http://localhost:8081",
       "type": "string"
     },
     {
@@ -25,9 +25,66 @@
       "key": "userId",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "resetToken",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
+    {
+      "name": "Microservices",
+      "item": [
+        {
+          "name": "Get Discovery Registry",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": [""]
+            },
+            "description": "Get all registered services from Discovery Service"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Auth Service Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/auth-service",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["auth-service"]
+            },
+            "description": "Get details for auth-service from Discovery Service"
+          },
+          "response": []
+        },
+        {
+          "name": "Gateway Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health"]
+            },
+            "description": "Check if the Gateway is correctly routing to Auth Service"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints for testing Microservices infrastructure"
+    },
     {
       "name": "Health Check",
       "item": [
@@ -252,6 +309,126 @@
         }
       ],
       "description": "Authentication endpoints for user registration, login, and password management"
+    },
+    {
+      "name": "Password Reset",
+      "item": [
+        {
+          "name": "Forgot Password - Request Reset",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.resetToken) {",
+                  "        pm.collectionVariables.set(\"resetToken\", jsonData.resetToken);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/forgot-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "forgot-password"]
+            },
+            "description": "Request a password reset token. An email will be sent with reset instructions."
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Reset Token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/verify-reset-token/{{resetToken}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "verify-reset-token", "{{resetToken}}"]
+            },
+            "description": "Verify if a reset token is valid and not expired"
+          },
+          "response": []
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{resetToken}}\",\n  \"newPassword\": \"newpassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/reset-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "reset-password"]
+            },
+            "description": "Reset password using the token received via email"
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Reset Tokens (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/reset-tokens/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "reset-tokens", "{{userId}}"]
+            },
+            "description": "Get all reset tokens for a specific user (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Cleanup Expired Tokens (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/reset-tokens/cleanup",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "reset-tokens", "cleanup"]
+            },
+            "description": "Delete all expired and used reset tokens (Admin only)"
+          },
+          "response": []
+        }
+      ],
+      "description": "Password reset functionality with email verification"
     },
     {
       "name": "User Management (Admin)",
@@ -626,6 +803,281 @@
         }
       ],
       "description": "Profile management endpoints for admins to manage user profiles"
+    },
+    {
+      "name": "Activity Logs",
+      "item": [
+        {
+          "name": "Get My Activity Logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/activity/me?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "activity", "me"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get current user's activity logs with pagination"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Activity Logs (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/activity?page=1&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "activity"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "50"
+                },
+                {
+                  "key": "userId",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "action",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "startDate",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "endDate",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get all activity logs with filters (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Activity Stats (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/activity/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "activity", "stats"]
+            },
+            "description": "Get activity statistics and analytics (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Cleanup Old Activity Logs (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/activity/cleanup?days=180",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "activity", "cleanup"],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "180"
+                }
+              ]
+            },
+            "description": "Cleanup activity logs older than specified days (Admin only)"
+          },
+          "response": []
+        }
+      ],
+      "description": "Activity logging and tracking endpoints"
+    },
+    {
+      "name": "Login History",
+      "item": [
+        {
+          "name": "Get My Login History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/login-history/me?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "login-history", "me"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get current user's login history with device details"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Login History (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/login-history?page=1&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "login-history"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "50"
+                },
+                {
+                  "key": "userId",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "loginStatus",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "startDate",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "endDate",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get all login history with filters (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Login Stats (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/login-history/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "login-history", "stats"]
+            },
+            "description": "Get login statistics with device, browser, and OS breakdown (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Active Sessions (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/login-history/active-sessions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "login-history", "active-sessions"]
+            },
+            "description": "Get all active user sessions (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Cleanup Old Login History (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/login-history/cleanup?days=90",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "login-history", "cleanup"],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "90"
+                }
+              ]
+            },
+            "description": "Cleanup login history older than specified days (Admin only)"
+          },
+          "response": []
+        }
+      ],
+      "description": "Login history tracking with device and location information"
     },
     {
       "name": "Error Scenarios",

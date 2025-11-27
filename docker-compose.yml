@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # MongoDB Service
   mongodb:
@@ -15,28 +13,51 @@ services:
     networks:
       - app-network
 
-  # Node.js Application Service
-  app:
+  # Discovery Service
+  discovery:
     build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: user-auth-api
+      context: ./services/discovery
+    container_name: discovery-service
     restart: unless-stopped
     ports:
       - "3000:3000"
+    networks:
+      - app-network
+
+  # Gateway Service
+  gateway:
+    build:
+      context: ./services/gateway
+    container_name: gateway-service
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    environment:
+      - DISCOVERY_URL=http://discovery:3000
+    depends_on:
+      - discovery
+    networks:
+      - app-network
+
+  # Auth Service
+  auth:
+    build:
+      context: ./services/auth
+    container_name: auth-service
+    restart: unless-stopped
     environment:
       - NODE_ENV=production
       - PORT=3000
       - MONGODB_URI=mongodb://mongodb:27017/userdb
       - JWT_SECRET=your_jwt_secret_key_change_this_in_production
       - JWT_EXPIRE=7d
+      - DISCOVERY_URL=http://discovery:3000
+      - SERVICE_URL=http://auth:3000
     depends_on:
       - mongodb
+      - discovery
     networks:
       - app-network
-    volumes:
-      - .:/app
-      - /app/node_modules
 
 networks:
   app-network:

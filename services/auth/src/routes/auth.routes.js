@@ -7,7 +7,14 @@ const {
   getMe,
   updatePassword
 } = require('../controllers/auth.controller');
-const { protect } = require('../middleware/auth.middleware');
+const {
+  forgotPassword,
+  resetPassword,
+  verifyResetToken,
+  getUserResetTokens,
+  cleanupExpiredTokens
+} = require('../controllers/password.controller');
+const { protect, authorize } = require('../middleware/auth.middleware');
 
 // Validation rules
 const registerValidation = [
@@ -27,8 +34,17 @@ const loginValidation = [
 router.post('/register', registerValidation, register);
 router.post('/login', loginValidation, login);
 
+// Password reset routes (Public)
+router.post('/forgot-password', forgotPassword);
+router.post('/reset-password', resetPassword);
+router.get('/verify-reset-token/:token', verifyResetToken);
+
 // Protected routes
 router.get('/me', protect, getMe);
 router.put('/updatepassword', protect, updatePassword);
+
+// Admin routes for reset token management
+router.get('/reset-tokens/:userId', protect, authorize('admin'), getUserResetTokens);
+router.delete('/reset-tokens/cleanup', protect, authorize('admin'), cleanupExpiredTokens);
 
 module.exports = router;

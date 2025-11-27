@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/database');
+const axios = require('axios');
 
 // Load environment variables
 dotenv.config();
@@ -21,10 +22,12 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/auth', require('./routes/auth.routes'));
 app.use('/api/users', require('./routes/user.routes'));
 app.use('/api/profile', require('./routes/profile.routes'));
+app.use('/api/activity', require('./routes/activity.routes'));
+app.use('/api/login-history', require('./routes/loginHistory.routes'));
 
 // Health check route
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'OK', message: 'Server is running' });
+app.get(['/health', '/api/health'], (req, res) => {
+  res.status(200).json({ status: 'OK', message: 'Server is running' }); 
 });
 
 // Error handling middleware
@@ -39,9 +42,24 @@ app.use((err, req, res, next) => {
 
 // Start server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+const DISCOVERY_URL = process.env.DISCOVERY_URL || 'http://discovery:3000';
+const SERVICE_NAME = 'auth-service';
+// In Docker, the hostname is the service name. We assume 'auth' is the service name in docker-compose.
+const SERVICE_URL = process.env.SERVICE_URL || `http://auth:${PORT}`;
+
+app.listen(PORT, async () => {
   console.log(`Server is running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV}`);
+
+  try {
+    await axios.post(`${DISCOVERY_URL}/register`, {
+      serviceName: SERVICE_NAME,
+      url: SERVICE_URL
+    });
+    console.log(`Registered ${SERVICE_NAME} with Discovery Service`);
+  } catch (error) {
+    console.error('Failed to register with Discovery Service:', error.message);
+  }
 });
 
 module.exports = app;
