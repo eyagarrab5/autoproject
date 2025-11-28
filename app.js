@@ -25,11 +25,15 @@ app.get("/", (req, res) => {
   res.render("payment");
 });
 app.get("/payment", (req, res) => {
+  // Render the UI page for payments
   res.render("payment");
 });
+
 app.use("/test", testRouter);
 app.use("/voiture", voitureRouter);
-app.use("/payment", paymentRouter);
+
+// Mount API routes under a distinct path to avoid conflict with the UI route
+app.use("/api/payments", paymentRouter);
 
 const server = http.createServer(app);
 console.log("Server running");

@@ -1,0 +1,501 @@
+{
+  "info": {
+    "name": "Payment API",
+    "description": "Collection pour tester les fonctionnalités de l'API Payment",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Créer un paiement",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": \"user123\",\n  \"orderId\": \"order456\",\n  \"amount\": 150.50,\n  \"paymentMethod\": \"card\",\n  \"paymentStatus\": \"pending\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/payments",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "payments"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Récupérer tous les paiements",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/payments",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "payments"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Récupérer un paiement par ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/payments/id/69153d340690c73263e69f1f",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "payments",
+            "id",
+            "69153d340690c73263e69f1f"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Récupérer les paiements par User ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/payments/user/user123",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "payments",
+            "user",
+            "user123"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Récupérer les paiements par Order ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/payments/order/order456",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "payments",
+            "order",
+            "order456"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Récupérer les paiements par méthode",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/payments/method/card",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "payments",
+            "method",
+            "card"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Récupérer les paiements par statut",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/payments/status/pending",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "payments",
+            "status",
+            "pending"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Récupérer les paiements récents",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/payments/recent/list?limit=5",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "payments",
+            "recent",
+            "list"
+          ],
+          "query": [
+            {
+              "key": "limit",
+              "value": "5"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Récupérer les paiements dans une plage de dates",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/payments/daterange/list?startDate=2025-01-01&endDate=2025-12-31",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "payments",
+            "daterange",
+            "list"
+          ],
+          "query": [
+            {
+              "key": "startDate",
+              "value": "2025-01-01"
+            },
+            {
+              "key": "endDate",
+              "value": "2025-12-31"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Mettre à jour le statut d'un paiement",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"paymentStatus\": \"completed\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/payments/69153d340690c73263e69f1f",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "payments",
+            "69153d340690c73263e69f1f"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Supprimer un paiement",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/payments/69153d340690c73263e69f1f",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "payments",
+            "69153d340690c73263e69f1f"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Stats - Total des montants",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/payments/stats/total",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "payments",
+            "stats",
+            "total"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Stats - Nombre total de paiements",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/payments/stats/count",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "payments",
+            "stats",
+            "count"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Stats - Montant moyen",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/payments/stats/average",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "payments",
+            "stats",
+            "average"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Stats - Par méthode de paiement",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/payments/stats/methods",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "payments",
+            "stats",
+            "methods"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Stats - Par statut",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/payments/stats/status-breakdown",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "payments",
+            "stats",
+            "status-breakdown"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Stats - Mensuelles",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/payments/stats/monthly",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "payments",
+            "stats",
+            "monthly"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Stats - Annuelles",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/payments/stats/yearly",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "payments",
+            "stats",
+            "yearly"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Historique - Paiements d'un utilisateur",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/payments/history/user/user123",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "payments",
+            "history",
+            "user",
+            "user123"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Historique - Paiements d'une commande",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/payments/history/order/order456",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "payments",
+            "history",
+            "order",
+            "order456"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Nombre de paiements par utilisateur",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/payments/count/user/user123",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "payments",
+            "count",
+            "user",
+            "user123"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Test API",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/payments/test",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "payments",
+            "test"
+          ]
+        }
+      }
+    }
+  ]
+}
