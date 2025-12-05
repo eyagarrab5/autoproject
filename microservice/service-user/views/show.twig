@@ -1,0 +1,36 @@
+<html>
+	<head>
+		<script src="/socket.io/socket.io.js"></script>
+	</head>
+	<body>
+        <label for="">Message :</label>
+    <input type="text" onkeyup=""  id="message">
+    <button onclick="send()">envoyer</button>
+
+		<script>
+
+			const socket = io.connect();
+            v=prompt('votre nom')
+
+socket.on("msg", (data) => {
+p = document.createElement("p")
+p.innerText = (data)
+document.body.append(p)
+})
+
+socket.on("send", (data) => {
+p = document.createElement("p")
+p.innerText = (data)
+document.body.append(p)
+})
+
+x=document.getElementById("message")
+
+function send(){
+    socket.emit("send",x.value)
+}
+		</script>
+
+
+	</body>
+</html>

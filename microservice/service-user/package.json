@@ -1,0 +1,20 @@
+{
+  "name": "projectcrud",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.13.2",
+    "express": "^5.1.0",
+    "mongoose": "^8.19.0",
+    "socket.io": "^4.8.1",
+    "twig": "^1.17.1",
+    "yup": "^1.7.1"
+  }
+}
