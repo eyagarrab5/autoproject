@@ -1,0 +1,432 @@
+{
+  "info": {
+    "name": "Projet CRUD - Voitures & Entretiens",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "b1b2de1a-1c7c-4d9b-9f2a-1d0a1a9a5f11"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000", "type": "string" },
+    { "key": "voitureId", "value": "1", "type": "string" },
+    { "key": "voitureMatr", "value": "PC-207-A", "type": "string" },
+    { "key": "entretienId", "value": "1", "type": "string" },
+    { "key": "carId", "value": "1", "type": "string" },
+    { "key": "keepMatr", "value": "true", "type": "string" },
+    { "key": "manualMatr", "value": "", "type": "string" },
+    { "key": "createSecond", "value": "false", "type": "string" },
+    { "key": "lastMatr", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Voitures",
+      "item": [
+        {
+          "name": "Create voiture",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/voitures", "host": ["{{baseUrl}}"], "path": ["voitures"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"_id\": \"ZZ-321-AAB\",\n  \"marque\": \"Peugeot SPORT\",\n  \"modele\": \"308\",\n  \"annee\": 2024,\n  \"carburant\": \"essence\",\n  \"kilometrage\": 12000,\n  \"etat\": \"available\",\n  \"tarifJournalier\": 75\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const errs = [];",
+                  "const raw = pm.request.body?.to?.raw ? pm.request.body.to.raw() : pm.request.body?.raw;",
+                  "let payload = {}; try { payload = JSON.parse(raw || '{}'); } catch (e) { errs.push('Body JSON invalide'); }",
+                  "// Identifier handling: prefer manualMatr, else keep body _id when keepMatr=true, else auto-generate",
+                  "const makeMatr = () => { return ('CAR-' + Math.random().toString(36).slice(2,8) + '-' + Date.now()).toUpperCase(); };",
+                  "const keep = String(pm.variables.get('keepMatr') || '').toLowerCase() === 'true';",
+                  "const manual = pm.variables.get('manualMatr');",
+                  "let chosen = null;",
+                  "if (manual && String(manual).trim()) {",
+                  "  chosen = String(manual).trim().toUpperCase();",
+                  "} else if (keep && (payload._id || payload.matr)) {",
+                  "  chosen = String((payload._id || payload.matr)).trim().toUpperCase();",
+                  "} else {",
+                  "  chosen = makeMatr();",
+                  "}",
+                  "// Ensure both _id (for display) and matr (for backend validation) are set",
+                  "payload._id = chosen;",
+                  "payload.matr = chosen;",
+                  "pm.collectionVariables.set('lastMatr', payload.matr);",
+                  "pm.request.headers.upsert({ key: 'X-Debug-Matr', value: payload.matr });",
+                  "pm.request.body.update(JSON.stringify(payload, null, 2));",
+                  "if (!pm.variables.get('baseUrl')) errs.push('baseUrl manquant');",
+                  "if (!payload.matr || typeof payload.matr !== 'string') errs.push('matr requis');",
+                  "if (!payload.marque) errs.push('marque requise');",
+                  "if (!payload.modele) errs.push('modele requis');",
+                  "const carburants = ['essence','diesel','hybride','electrique'];",
+                  "if (payload.carburant != null && !carburants.includes(String(payload.carburant).toLowerCase())) errs.push('carburant invalide');",
+                  "if (payload.annee != null && !Number.isInteger(payload.annee)) errs.push('annee doit etre un entier');",
+                  "if (payload.kilometrage != null && Number(payload.kilometrage) < 0) errs.push('kilometrage >= 0');",
+                  "const etats = ['available','rented','maintenance','unavailable'];",
+                  "if (payload.etat != null && !etats.includes(String(payload.etat))) errs.push('etat invalide');",
+                  "if (payload.tarifJournalier != null && Number(payload.tarifJournalier) < 0) errs.push('tarifJournalier >= 0');",
+                  "if (errs.length) { console.warn('Avertissements (client):', errs); }"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Created voiture', function () { pm.response.to.have.status(201); });",
+                  "let data = pm.response.json();",
+                  "if (data && data._id) { pm.collectionVariables.set('voitureId', String(data._id)); }",
+                  "if (data && data._id) { pm.collectionVariables.set('voitureMatr', String(data._id)); }",
+                  "console.log('voitureId set to', pm.collectionVariables.get('voitureId'));",
+                  "// Création d'une 2ème voiture (optionnelle). Activez createSecond=true si besoin.",
+                  "if (String(pm.variables.get('createSecond')||'').toLowerCase()==='true') {",
+                  "  const baseUrl = pm.variables.get('baseUrl');",
+                  "  const makeMatr2 = () => { return ('CAR-' + Math.random().toString(36).slice(2,8) + '-' + Date.now()).toUpperCase(); };",
+                  "  const secondPayload = {",
+                  "    matr: makeMatr2(),",
+                  "    marque: 'CITROEN C3',",
+                  "    modele: 'Shine',",
+                  "    annee: 2021,",
+                  "    carburant: 'essence',",
+                  "    kilometrage: 9000,",
+                  "    etat: 'available',",
+                  "    tarifJournalier: 60",
+                  "  };",
+                  "  pm.sendRequest({",
+                  "    url: baseUrl + '/voitures',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json' },",
+                  "    body: { mode: 'raw', raw: JSON.stringify(secondPayload) }",
+                  "  }, (err, resp) => {",
+                  "    if (err) { console.warn('Second create error', err); return; }",
+                  "    try {",
+                  "      const d2 = resp.json();",
+                  "      if (d2 && d2._id) { pm.collectionVariables.set('voitureId2', String(d2._id)); pm.collectionVariables.set('voitureMatr2', String(d2._id)); }",
+                  "      console.log('voitureId2 set to', pm.collectionVariables.get('voitureId2'));",
+                  "    } catch(e) { console.warn('Second create parse error', e); }",
+                  "  });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "List voitures",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/voitures", "host": ["{{baseUrl}}"], "path": ["voitures"] }
+          }
+        },
+        {
+          "name": "Get voiture by id",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/voitures/{{voitureId}}", "host": ["{{baseUrl}}"], "path": ["voitures", "{{voitureId}}"] }
+          }
+        },
+        {
+          "name": "Get voiture by plate (matr)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/voitures/plate/{{voitureMatr}}", "host": ["{{baseUrl}}"], "path": ["voitures", "plate", "{{voitureMatr}}"] }
+          }
+        },
+        {
+          "name": "Update voiture",
+          "request": {
+            "method": "PUT",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/voitures/{{voitureId}}", "host": ["{{baseUrl}}"], "path": ["voitures", "{{voitureId}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"kilometrage\": 20000,\n  \"etat\": \"maintenance\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "if (!pm.collectionVariables.get('voitureId')) throw new Error('voitureId manquant');",
+                  "const body = pm.request.body?.to?.raw ? pm.request.body.to.raw() : pm.request.body?.raw;",
+                  "let payload = {}; try { payload = JSON.parse(body || '{}'); } catch (e) { throw new Error('Body JSON invalide'); }",
+                  "if (payload.kilometrage != null && Number(payload.kilometrage) < 0) throw new Error('kilometrage >= 0');",
+                  "const etats = ['available','rented','maintenance','unavailable'];",
+                  "if (payload.etat != null && !etats.includes(String(payload.etat))) throw new Error('etat invalide');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete voiture",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/voitures/{{voitureId}}", "host": ["{{baseUrl}}"], "path": ["voitures", "{{voitureId}}"] }
+          }
+        },
+        {
+          "name": "Search voitures",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/voitures/search?marque=Renault&minAnnee=2015&q=clio",
+              "host": ["{{baseUrl}}"],
+              "path": ["voitures", "search"],
+              "query": [
+                {"key":"marque","value":"Renault"},
+                {"key":"minAnnee","value":"2015"},
+                {"key":"q","value":"clio"}
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {"exec": [
+                "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                "pm.test('Is array or object', function () { const j = pm.response.json(); pm.expect(typeof j === 'object').to.be.true; });"
+              ], "type": "text/javascript"}
+            }
+          ]
+        },
+        {
+          "name": "Sort voitures",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/voitures/sort?sort=tarifJournalier:desc,annee:asc",
+              "host": ["{{baseUrl}}"],
+              "path": ["voitures", "sort"],
+              "query": [
+                {"key":"sort","value":"tarifJournalier:desc,annee:asc"}
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {"exec": [
+                "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                "pm.test('Is array', function () { const j = pm.response.json(); pm.expect(Array.isArray(j)).to.be.true; });"
+              ], "type": "text/javascript"}
+            }
+          ]
+        },
+        {
+          "name": "Stats voitures",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/voitures/stats", "host": ["{{baseUrl}}"], "path": ["voitures", "stats"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {"exec": [
+                "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                "pm.test('Has facets', function () { const j = pm.response.json(); pm.expect(j).to.have.property('countByCarburant'); pm.expect(j).to.have.property('totals'); });"
+              ], "type": "text/javascript"}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Entretiens",
+      "item": [
+        {
+          "name": "Create entretien",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/entretiens", "host": ["{{baseUrl}}"], "path": ["entretiens"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"car\": \"{{voitureMatr}}\",\n  \"type\": \"badtype\",\n  \"date\": \"2026-13-40\",\n  \"description\": \"Invalid\",\n  \"cout\": -5,\n  \"piecesReconditionneesPct\": 150,\n  \"dechetsKg\": -2\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const errs = [];",
+                  "const body = pm.request.body?.to?.raw ? pm.request.body.to.raw() : pm.request.body?.raw;",
+                  "let payload = {}; try { payload = JSON.parse(body || '{}'); } catch (e) { errs.push('Body JSON invalide'); }",
+                  "if (!payload.matr && !payload.car && !payload.voitureNumero) errs.push('matr ou car requis');",
+                  "const types = ['routine','reparation','inspection','autre'];",
+                  "if (payload.type != null && !types.includes(String(payload.type))) errs.push('type invalide');",
+                  "if (payload.date != null && !/^\\d{4}-\\d{2}-\\d{2}$/.test(String(payload.date))) errs.push('date au format YYYY-MM-DD requise');",
+                  "if (payload.cout == null || Number(payload.cout) < 0) errs.push('cout >= 0 requis');",
+                  "if (payload.piecesReconditionneesPct != null) { const v = Number(payload.piecesReconditionneesPct); if (v < 0 || v > 100) errs.push('piecesReconditionneesPct 0..100'); }",
+                  "if (payload.dechetsKg != null && Number(payload.dechetsKg) < 0) errs.push('dechetsKg >= 0');",
+                  "if (errs.length) { console.warn('Avertissements (client):', errs); }"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Created entretien', function () { pm.response.to.have.status(201); });",
+                  "let data = pm.response.json();",
+                  "if (data && data._id) { pm.collectionVariables.set('entretienId', String(data._id)); }",
+                  "if (data && data.car) { pm.collectionVariables.set('carId', String(data.car)); }",
+                  "console.log('entretienId set to', pm.collectionVariables.get('entretienId'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "List entretiens",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/entretiens", "host": ["{{baseUrl}}"], "path": ["entretiens"] }
+          }
+        },
+        {
+          "name": "List entretiens by car",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/entretiens/car/{{carId}}", "host": ["{{baseUrl}}"], "path": ["entretiens", "car", "{{carId}}"] }
+          }
+        },
+        {
+          "name": "Get entretien by id",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/entretiens/{{entretienId}}", "host": ["{{baseUrl}}"], "path": ["entretiens", "{{entretienId}}"] }
+          }
+        },
+        {
+          "name": "Update entretien",
+          "request": {
+            "method": "PUT",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/entretiens/{{entretienId}}", "host": ["{{baseUrl}}"], "path": ["entretiens", "{{entretienId}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Vidange + filtre + plaquettes\",\n  \"cout\": 180\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const errs = [];",
+                  "if (!pm.collectionVariables.get('entretienId')) errs.push('entretienId manquant');",
+                  "const body = pm.request.body?.to?.raw ? pm.request.body.to.raw() : pm.request.body?.raw;",
+                  "let payload = {}; try { payload = JSON.parse(body || '{}'); } catch (e) { errs.push('Body JSON invalide'); }",
+                  "if (payload.cout != null && Number(payload.cout) < 0) errs.push('cout >= 0');",
+                  "if (errs.length) { console.warn('Avertissements (client):', errs); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete entretien",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/entretiens/{{entretienId}}", "host": ["{{baseUrl}}"], "path": ["entretiens", "{{entretienId}}"] }
+          }
+        },
+        {
+          "name": "Search entretiens",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/entretiens/search?type=routine&minCout=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["entretiens", "search"],
+              "query": [
+                {"key":"type","value":"routine"},
+                {"key":"minCout","value":"50"}
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {"exec": [
+                "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                "pm.test('Is array or object', function () { const j = pm.response.json(); pm.expect(typeof j === 'object').to.be.true; });"
+              ], "type": "text/javascript"}
+            }
+          ]
+        },
+        {
+          "name": "Sort entretiens",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/entretiens/sort?sort=date:desc,cout:asc",
+              "host": ["{{baseUrl}}"],
+              "path": ["entretiens", "sort"],
+              "query": [
+                {"key":"sort","value":"date:desc,cout:asc"}
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {"exec": [
+                "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                "pm.test('Is array', function () { const j = pm.response.json(); pm.expect(Array.isArray(j)).to.be.true; });"
+              ], "type": "text/javascript"}
+            }
+          ]
+        },
+        {
+          "name": "Stats entretiens",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/entretiens/stats", "host": ["{{baseUrl}}"], "path": ["entretiens", "stats"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {"exec": [
+                "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                "pm.test('Has facets', function () { const j = pm.response.json(); pm.expect(j).to.have.property('countByType'); pm.expect(j).to.have.property('totals'); });"
+              ], "type": "text/javascript"}
+            }
+          ]
+        },
+        {
+          "name": "Predict maintenance",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/entretiens/predict", "host": ["{{baseUrl}}"], "path": ["entretiens", "predict"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {"exec": [
+                "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                "const j = pm.response.json();",
+                "pm.test('Has resume', function () { pm.expect(j).to.have.property('resume'); });",
+                "pm.test('Has arrays', function () { pm.expect(j).to.have.property('vehicules_a_maintenir_15j'); pm.expect(j).to.have.property('alertes_prioritaires'); pm.expect(j).to.have.property('planning_previsionnel'); });",
+                "pm.test('Per-vehicle estimation exists', function () { pm.expect(j).to.have.property('estimation_par_vehicule'); });"
+              ], "type": "text/javascript"}
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+
+

@@ -1,0 +1,1148 @@
+<!doctype html>
+<html lang="fr">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Gestion des Voitures</title>
+		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+	</head>
+	<body class="bg-light">
+		<div class="container py-4">
+			<!-- Header -->
+			<div class="d-flex justify-content-between align-items-center mb-4">
+				<h1 class="h3"><i class="bi bi-car-front"></i> Gestion du Parc Auto</h1>
+				<small class="text-muted">Interface complète pour gérer les voitures et leurs entretiens</small>
+			</div>
+
+			<!-- Création de Voiture -->
+			<div class="card mb-4">
+				<div class="card-header bg-primary text-white">
+					<h5 class="mb-0"><i class="bi bi-plus-circle"></i> Ajouter une nouvelle voiture</h5>
+				</div>
+				<div class="card-body">
+					<form id="voitureForm" class="row g-3">
+						<div class="col-md-3">
+							<label for="matr" class="form-label">Immatriculation *</label>
+							<input type="text" id="matr" class="form-control" placeholder="ex: PC-207-A" required />
+							<small class="form-text text-muted">Identifiant unique</small>
+						</div>
+						<div class="col-md-3">
+							<label for="marque" class="form-label">Marque *</label>
+							<input type="text" id="marque" class="form-control" placeholder="ex: Peugeot" required />
+						</div>
+						<div class="col-md-3">
+							<label for="modele" class="form-label">Modèle *</label>
+							<input type="text" id="modele" class="form-control" placeholder="ex: 308" required />
+						</div>
+						<div class="col-md-3">
+							<label for="annee" class="form-label">Année</label>
+							<input type="number" id="annee" class="form-control" min="2000" max="2025" placeholder="ex: 2024" />
+						</div>
+
+						<div class="col-md-3">
+							<label for="carburant" class="form-label">Carburant</label>
+							<select id="carburant" class="form-select">
+								<option value="essence">Essence</option>
+								<option value="diesel">Diesel</option>
+								<option value="hybride">Hybride</option>
+								<option value="electrique">Électrique</option>
+							</select>
+						</div>
+						<div class="col-md-3">
+							<label for="kilometrage" class="form-label">Kilométrage (km)</label>
+							<input type="number" id="kilometrage" class="form-control" min="0" placeholder="ex: 12000" />
+						</div>
+						<div class="col-md-3">
+							<label for="etat" class="form-label">État</label>
+							<select id="etat" class="form-select">
+								<option value="available">Disponible</option>
+								<option value="rented">Louée</option>
+								<option value="maintenance">En maintenance</option>
+								<option value="unavailable">Indisponible</option>
+							</select>
+						</div>
+						<div class="col-md-3">
+							<label for="tarifJournalier" class="form-label">Tarif Journalier (€)</label>
+							<input type="number" step="0.01" id="tarifJournalier" class="form-control" min="0" placeholder="ex: 75.00" />
+						</div>
+
+						<div class="col-12">
+							<button type="submit" class="btn btn-primary">
+								<i class="bi bi-save"></i> Enregistrer la voiture
+							</button>
+							<button type="button" id="refreshVoituresBtn" class="btn btn-secondary ms-2">
+								<i class="bi bi-arrow-clockwise"></i> Actualiser la liste
+							</button>
+						</div>
+					</form>
+				</div>
+			</div>
+
+			<!-- Liste des Voitures -->
+			<div class="card mb-4">
+				<div class="card-header bg-success text-white">
+					<h5 class="mb-0"><i class="bi bi-list-ul"></i> Liste des voitures</h5>
+				</div>
+				<div class="card-body">
+					<div class="table-responsive">
+						<table class="table table-sm table-striped table-hover" id="voituresTable">
+							<thead class="table-dark">
+								<tr>
+									<th>Immat.</th>
+									<th>Marque</th>
+									<th>Modèle</th>
+									<th>Année</th>
+									<th>Carburant</th>
+									<th>Km</th>
+									<th>État</th>
+									<th>Tarif/jour</th>
+									<th>Créée le</th>
+									<th>Actions</th>
+								</tr>
+							</thead>
+							<tbody></tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+
+			<!-- Filtres et Recherche Voitures -->
+			<div class="card mb-4">
+				<div class="card-header">
+					<h5 class="mb-0"><i class="bi bi-funnel"></i> Filtres & Recherche Voitures</h5>
+				</div>
+				<div class="card-body">
+					<div class="row g-3">
+						<div class="col-md-3">
+							<label for="filterMarque" class="form-label">Par Marque</label>
+							<input type="text" id="filterMarque" class="form-control" placeholder="ex: Peugeot" />
+						</div>
+						<div class="col-md-2">
+							<label for="filterCarburant" class="form-label">Par Carburant</label>
+							<select id="filterCarburant" class="form-select">
+								<option value="">-- Tous --</option>
+								<option value="essence">Essence</option>
+								<option value="diesel">Diesel</option>
+								<option value="hybride">Hybride</option>
+								<option value="electrique">Électrique</option>
+							</select>
+						</div>
+						<div class="col-md-2">
+							<label for="filterEtat" class="form-label">Par État</label>
+							<select id="filterEtat" class="form-select">
+								<option value="">-- Tous --</option>
+								<option value="available">Disponible</option>
+								<option value="rented">Louée</option>
+								<option value="maintenance">Maintenance</option>
+								<option value="unavailable">Indisponible</option>
+							</select>
+						</div>
+						<div class="col-md-2">
+							<label for="filterMinAnnee" class="form-label">Année min</label>
+							<input type="number" id="filterMinAnnee" class="form-control" placeholder="2015" />
+						</div>
+						<div class="col-md-2">
+							<label for="filterMaxAnnee" class="form-label">Année max</label>
+							<input type="number" id="filterMaxAnnee" class="form-control" placeholder="2024" />
+						</div>
+						<div class="col-md-1 d-flex align-items-end">
+							<button class="btn btn-info w-100" id="applyFiltersBtn">
+								<i class="bi bi-search"></i>
+							</button>
+						</div>
+					</div>
+					<div class="row mt-3">
+						<div class="col-md-8">
+							<label for="searchGeneral" class="form-label">Recherche générale</label>
+							<input type="text" id="searchGeneral" class="form-control" placeholder="Rechercher par marque, modèle ou immatriculation..." />
+						</div>
+						<div class="col-md-2">
+							<label for="sortField" class="form-label">Trier par</label>
+							<select id="sortField" class="form-select">
+								<option value="marque:asc">Marque (A-Z)</option>
+								<option value="annee:desc">Année (récente)</option>
+								<option value="tarifJournalier:asc">Tarif (bas)</option>
+								<option value="tarifJournalier:desc">Tarif (haut)</option>
+								<option value="kilometrage:asc">Km (faible)</option>
+								<option value="kilometrage:desc">Km (élevé)</option>
+							</select>
+						</div>
+						<div class="col-md-2 d-flex align-items-end">
+							<button class="btn btn-warning w-100" id="sortBtn">Trier</button>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Statistiques Voitures -->
+			<div class="card mb-4">
+				<div class="card-header bg-info text-white">
+					<h5 class="mb-0"><i class="bi bi-graph-up"></i> Statistiques du Parc Auto</h5>
+				</div>
+				<div class="card-body">
+					<div class="row" id="statsVoituresContainer">
+						<div class="col-md-2">
+							<div class="card bg-primary text-white">
+								<div class="card-body text-center">
+									<h6 class="card-title">Total Voitures</h6>
+									<p class="card-text fs-4" id="statTotalVoitures">-</p>
+								</div>
+							</div>
+						</div>
+						<div class="col-md-2">
+							<div class="card bg-success text-white">
+								<div class="card-body text-center">
+									<h6 class="card-title">Disponibles</h6>
+									<p class="card-text fs-4" id="statDisponibles">-</p>
+								</div>
+							</div>
+						</div>
+						<div class="col-md-2">
+							<div class="card bg-warning text-white">
+								<div class="card-body text-center">
+									<h6 class="card-title">En maintenance</h6>
+									<p class="card-text fs-4" id="statMaintenance">-</p>
+								</div>
+							</div>
+						</div>
+						<div class="col-md-2">
+							<div class="card bg-secondary text-white">
+								<div class="card-body text-center">
+									<h6 class="card-title">Tarif moyen</h6>
+									<p class="card-text fs-4" id="statTarifMoyen">-</p>
+								</div>
+							</div>
+						</div>
+						<div class="col-md-2">
+							<div class="card bg-danger text-white">
+								<div class="card-body text-center">
+									<h6 class="card-title">Km moyen</h6>
+									<p class="card-text fs-4" id="statKmMoyen">-</p>
+								</div>
+							</div>
+						</div>
+						<div class="col-md-2 d-flex align-items-center">
+							<button class="btn btn-light w-100 h-75" id="refreshStatsVoituresBtn">
+								<i class="bi bi-arrow-clockwise"></i> Actualiser
+							</button>
+						</div>
+					</div>
+					<div class="row mt-4">
+						<div class="col-md-6">
+							<div class="card">
+								<div class="card-header">
+									<h6 class="mb-0">Répartition par Carburant</h6>
+								</div>
+								<div class="card-body">
+									<ul class="list-group" id="statsCarburant"></ul>
+								</div>
+							</div>
+						</div>
+						<div class="col-md-6">
+							<div class="card">
+								<div class="card-header">
+									<h6 class="mb-0">Répartition par État</h6>
+								</div>
+								<div class="card-body">
+									<ul class="list-group" id="statsEtat"></ul>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Section Entretiens -->
+			<div class="card">
+				<div class="card-header bg-dark text-white">
+					<h5 class="mb-0"><i class="bi bi-tools"></i> Gestion des Entretiens</h5>
+				</div>
+				<div class="card-body">
+					<!-- Formulaire Entretien -->
+					<div class="row mb-4">
+						<div class="col-12">
+							<h6>Ajouter un entretien</h6>
+							<form id="entretienForm" class="row g-3">
+								<div class="col-md-3">
+									<label for="entretienMatr" class="form-label">Voiture (Immat.) *</label>
+									<select id="entretienMatr" class="form-select" required>
+										<option value="">Sélectionnez une voiture...</option>
+									</select>
+								</div>
+								<div class="col-md-3">
+									<label for="entretienType" class="form-label">Type *</label>
+									<select id="entretienType" class="form-select" required>
+										<option value="routine">Routine</option>
+										<option value="reparation">Réparation</option>
+										<option value="inspection">Inspection</option>
+										<option value="autre">Autre</option>
+									</select>
+								</div>
+								<div class="col-md-3">
+									<label for="entretienDate" class="form-label">Date *</label>
+									<input type="date" id="entretienDate" class="form-control" required />
+								</div>
+								<div class="col-md-3">
+									<label for="entretienCout" class="form-label">Coût (€) *</label>
+									<input type="number" step="0.01" id="entretienCout" class="form-control" min="0" required />
+								</div>
+								<div class="col-md-6">
+									<label for="entretienDescription" class="form-label">Description</label>
+									<textarea id="entretienDescription" class="form-control" rows="2" placeholder="Détails de l'entretien..."></textarea>
+								</div>
+								<div class="col-md-3">
+									<label for="entretienPieces" class="form-label">Pièces recond. (%)</label>
+									<input type="number" id="entretienPieces" class="form-control" min="0" max="100" placeholder="0-100" />
+								</div>
+								<div class="col-md-3">
+									<label for="entretienDechets" class="form-label">Déchets (kg)</label>
+									<input type="number" step="0.1" id="entretienDechets" class="form-control" min="0" />
+								</div>
+								<div class="col-12">
+									<button type="submit" class="btn btn-dark">
+										<i class="bi bi-wrench"></i> Enregistrer l'entretien
+									</button>
+									<button type="button" id="refreshEntretiensBtn" class="btn btn-secondary ms-2">
+										<i class="bi bi-arrow-clockwise"></i> Actualiser
+									</button>
+								</div>
+							</form>
+						</div>
+					</div>
+
+					<!-- Liste des Entretiens -->
+					<div class="row">
+						<div class="col-12">
+							<h6>Historique des entretiens</h6>
+							<div class="table-responsive">
+								<table class="table table-sm table-striped" id="entretiensTable">
+									<thead>
+										<tr>
+											<th>Voiture</th>
+											<th>Type</th>
+											<th>Date</th>
+											<th>Description</th>
+											<th>Coût (€)</th>
+											<th>Pièces %</th>
+											<th>Déchets kg</th>
+											<th>Actions</th>
+										</tr>
+									</thead>
+									<tbody></tbody>
+								</table>
+							</div>
+						</div>
+					</div>
+
+					<!-- Filtres Entretiens -->
+					<div class="row mt-4">
+						<div class="col-12">
+							<h6>Filtres Entretiens</h6>
+							<div class="row g-3">
+								<div class="col-md-3">
+									<label for="filterEntretienMatr" class="form-label">Par Voiture</label>
+									<select id="filterEntretienMatr" class="form-select">
+										<option value="">-- Toutes --</option>
+									</select>
+								</div>
+								<div class="col-md-2">
+									<label for="filterEntretienType" class="form-label">Par Type</label>
+									<select id="filterEntretienType" class="form-select">
+										<option value="">-- Tous --</option>
+										<option value="routine">Routine</option>
+										<option value="reparation">Réparation</option>
+										<option value="inspection">Inspection</option>
+										<option value="autre">Autre</option>
+									</select>
+								</div>
+								<div class="col-md-2">
+									<label for="filterEntretienMinCout" class="form-label">Coût min (€)</label>
+									<input type="number" id="filterEntretienMinCout" class="form-control" min="0" />
+								</div>
+								<div class="col-md-2">
+									<label for="filterEntretienMaxCout" class="form-label">Coût max (€)</label>
+									<input type="number" id="filterEntretienMaxCout" class="form-control" min="0" />
+								</div>
+								<div class="col-md-3 d-flex align-items-end">
+									<button class="btn btn-info w-100" id="applyEntretienFiltersBtn">Filtrer</button>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Statistiques Entretiens -->
+					<div class="row mt-4">
+						<div class="col-12">
+							<div class="card">
+								<div class="card-header">
+									<h6 class="mb-0">Statistiques Entretiens</h6>
+								</div>
+								<div class="card-body">
+									<div class="row">
+										<div class="col-md-3">
+											<div class="card bg-info text-white">
+												<div class="card-body text-center">
+													<h6 class="card-title">Coût total</h6>
+													<p class="card-text fs-4" id="statCoutTotal">- €</p>
+												</div>
+											</div>
+										</div>
+										<div class="col-md-3">
+											<div class="card bg-success text-white">
+												<div class="card-body text-center">
+													<h6 class="card-title">Entretiens</h6>
+													<p class="card-text fs-4" id="statTotalEntretiens">-</p>
+												</div>
+											</div>
+										</div>
+										<div class="col-md-3">
+											<div class="card bg-warning text-white">
+												<div class="card-body text-center">
+													<h6 class="card-title">Coût moyen</h6>
+													<p class="card-text fs-4" id="statCoutMoyen">- €</p>
+												</div>
+											</div>
+										</div>
+										<div class="col-md-3">
+											<button class="btn btn-light w-100 h-100" id="refreshStatsEntretiensBtn">
+												<i class="bi bi-arrow-clockwise"></i> Actualiser Stats
+											</button>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Maintenance Prédictive -->
+			<div class="card mt-4">
+				<div class="card-header bg-danger text-white">
+					<h5 class="mb-0"><i class="bi bi-clipboard2-pulse"></i> Maintenance Prédictive</h5>
+				</div>
+				<div class="card-body">
+					<div class="row">
+						<div class="col-md-4">
+							<div class="card bg-light">
+								<div class="card-body">
+									<h6 class="card-title">Voitures à maintenir dans 15 jours</h6>
+									<p class="card-text" id="predict15jours">-</p>
+								</div>
+							</div>
+						</div>
+						<div class="col-md-4">
+							<div class="card bg-light">
+								<div class="card-body">
+									<h6 class="card-title">Alertes prioritaires</h6>
+									<p class="card-text" id="predictAlertes">-</p>
+								</div>
+							</div>
+						</div>
+						<div class="col-md-4">
+							<div class="card bg-light">
+								<div class="card-body">
+									<h6 class="card-title">Coût estimé 30 jours</h6>
+									<p class="card-text" id="predictCout30j">- €</p>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="row mt-3">
+						<div class="col-12 text-center">
+							<button class="btn btn-danger" id="predictBtn">
+								<i class="bi bi-calculator"></i> Calculer la maintenance prédictive
+							</button>
+							<button class="btn btn-outline-danger ms-2" id="predictDetailsBtn">
+								Voir les détails
+							</button>
+						</div>
+					</div>
+					<div class="row mt-3">
+						<div class="col-12">
+							<div id="predictDetails" style="display: none;">
+								<!-- Détails de la maintenance prédictive -->
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<script>
+const API_BASE = 'http://localhost:3000/api';			
+			// ==================== VOITURES ====================
+			
+			// Charger les voitures au démarrage
+			async function loadVoitures() {
+				try {
+					const res = await fetch(`${API_BASE}/voitures`);
+					if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+					const voitures = await res.json();
+					
+					const tbody = document.querySelector('#voituresTable tbody');
+					tbody.innerHTML = '';
+					
+					// Mettre à jour les dropdowns de sélection
+					const entretienMatrSelect = document.getElementById('entretienMatr');
+					const filterEntretienMatrSelect = document.getElementById('filterEntretienMatr');
+					entretienMatrSelect.innerHTML = '<option value="">Sélectionnez une voiture...</option>';
+					filterEntretienMatrSelect.innerHTML = '<option value="">-- Toutes --</option>';
+					
+					voitures.forEach(v => {
+						// Remplir le tableau
+						const tr = document.createElement('tr');
+						tr.innerHTML = `
+							<td><strong>${v._id || ''}</strong></td>
+							<td>${v.marque || ''}</td>
+							<td>${v.modele || ''}</td>
+							<td>${v.annee || ''}</td>
+							<td><span class="badge bg-info">${v.carburant || ''}</span></td>
+							<td>${v.kilometrage ? v.kilometrage.toLocaleString() : ''}</td>
+							<td>
+								<span class="badge ${getEtatBadgeClass(v.etat)}">${getEtatText(v.etat)}</span>
+							</td>
+							<td><strong>${v.tarifJournalier ? v.tarifJournalier.toFixed(2) + '€' : ''}</strong></td>
+							<td>${v.createdAt ? new Date(v.createdAt).toLocaleDateString() : ''}</td>
+							<td>
+								<button class="btn btn-sm btn-warning" data-id="${v._id}" data-action="edit">
+									<i class="bi bi-pencil"></i>
+								</button>
+								<button class="btn btn-sm btn-danger ms-1" data-id="${v._id}" data-action="delete">
+									<i class="bi bi-trash"></i>
+								</button>
+							</td>
+						`;
+						tbody.appendChild(tr);
+						
+						// Ajouter aux dropdowns
+						const option1 = document.createElement('option');
+						option1.value = v._id;
+						option1.textContent = `${v._id} - ${v.marque} ${v.modele}`;
+						entretienMatrSelect.appendChild(option1);
+						
+						const option2 = document.createElement('option');
+						option2.value = v._id;
+						option2.textContent = `${v._id} - ${v.marque} ${v.modele}`;
+						filterEntretienMatrSelect.appendChild(option2);
+					});
+				} catch (err) {
+					console.error('Erreur chargement voitures:', err);
+					showAlert('danger', 'Erreur lors du chargement des voitures: ' + err.message);
+				}
+			}
+			
+			// Créer une voiture
+			document.getElementById('voitureForm').addEventListener('submit', async (e) => {
+				e.preventDefault();
+				
+				const payload = {
+					_id: document.getElementById('matr').value.toUpperCase(),
+					matr: document.getElementById('matr').value.toUpperCase(),
+					marque: document.getElementById('marque').value,
+					modele: document.getElementById('modele').value,
+					annee: document.getElementById('annee').value ? parseInt(document.getElementById('annee').value) : null,
+					carburant: document.getElementById('carburant').value,
+					kilometrage: document.getElementById('kilometrage').value ? parseInt(document.getElementById('kilometrage').value) : null,
+					etat: document.getElementById('etat').value,
+					tarifJournalier: document.getElementById('tarifJournalier').value ? parseFloat(document.getElementById('tarifJournalier').value) : null
+				};
+				
+				try {
+					const res = await fetch(`${API_BASE}/voitures`, {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify(payload)
+					});
+					
+					if (res.status === 409) {
+						throw new Error('Cette immatriculation existe déjà');
+					}
+					if (!res.ok) {
+						throw new Error(`Erreur ${res.status}: ${res.statusText}`);
+					}
+					
+					showAlert('success', 'Voiture créée avec succès!');
+					document.getElementById('voitureForm').reset();
+					await loadVoitures();
+				} catch (err) {
+					console.error('Erreur création voiture:', err);
+					showAlert('danger', 'Erreur lors de la création: ' + err.message);
+				}
+			});
+			
+			// Gestion des actions (éditer/supprimer)
+			document.querySelector('#voituresTable tbody').addEventListener('click', async (e) => {
+				const btn = e.target.closest('button');
+				if (!btn) return;
+				
+				const id = btn.dataset.id;
+				const action = btn.dataset.action;
+				
+				if (action === 'delete') {
+					if (!confirm(`Supprimer la voiture ${id} ? Cette action est irréversible.`)) return;
+					
+					try {
+						const res = await fetch(`${API_BASE}/voitures/${id}`, {
+							method: 'DELETE'
+						});
+						
+						if (!res.ok) throw new Error('Suppression échouée');
+						
+						showAlert('success', 'Voiture supprimée avec succès!');
+						await loadVoitures();
+					} catch (err) {
+						console.error('Erreur suppression:', err);
+						showAlert('danger', 'Erreur lors de la suppression');
+					}
+				} else if (action === 'edit') {
+					// Récupérer les données de la voiture
+					try {
+						const res = await fetch(`${API_BASE}/voitures/${id}`);
+						if (!res.ok) throw new Error('Impossible de récupérer les données');
+						
+						const voiture = await res.json();
+						
+						// Remplir le formulaire avec les données
+						document.getElementById('matr').value = voiture._id;
+						document.getElementById('marque').value = voiture.marque || '';
+						document.getElementById('modele').value = voiture.modele || '';
+						document.getElementById('annee').value = voiture.annee || '';
+						document.getElementById('carburant').value = voiture.carburant || 'essence';
+						document.getElementById('kilometrage').value = voiture.kilometrage || '';
+						document.getElementById('etat').value = voiture.etat || 'available';
+						document.getElementById('tarifJournalier').value = voiture.tarifJournalier || '';
+						
+						// Changer le texte du bouton
+						const submitBtn = document.querySelector('#voitureForm button[type="submit"]');
+						submitBtn.innerHTML = '<i class="bi bi-save"></i> Mettre à jour';
+						submitBtn.classList.remove('btn-primary');
+						submitBtn.classList.add('btn-warning');
+						submitBtn.dataset.editingId = id;
+						
+						// Changer le comportement du formulaire temporairement
+						const form = document.getElementById('voitureForm');
+						form.dataset.editing = 'true';
+						
+						showAlert('info', `Édition de la voiture ${id}. Modifiez les champs et cliquez sur "Mettre à jour".`);
+					} catch (err) {
+						console.error('Erreur édition:', err);
+						showAlert('danger', 'Erreur lors de la récupération des données');
+					}
+				}
+			});
+			
+			// Gérer la mise à jour du formulaire
+			document.getElementById('voitureForm').addEventListener('submit', async function(e) {
+				if (this.dataset.editing === 'true') {
+					e.preventDefault();
+					
+					const id = document.querySelector('#voitureForm button[type="submit"]').dataset.editingId;
+					const payload = {
+						marque: document.getElementById('marque').value,
+						modele: document.getElementById('modele').value,
+						annee: document.getElementById('annee').value ? parseInt(document.getElementById('annee').value) : null,
+						carburant: document.getElementById('carburant').value,
+						kilometrage: document.getElementById('kilometrage').value ? parseInt(document.getElementById('kilometrage').value) : null,
+						etat: document.getElementById('etat').value,
+						tarifJournalier: document.getElementById('tarifJournalier').value ? parseFloat(document.getElementById('tarifJournalier').value) : null
+					};
+					
+					try {
+						const res = await fetch(`${API_BASE}/voitures/${id}`, {
+							method: 'PUT',
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify(payload)
+						});
+						
+						if (!res.ok) throw new Error('Mise à jour échouée');
+						
+						showAlert('success', 'Voiture mise à jour avec succès!');
+						
+						// Réinitialiser le formulaire
+						this.reset();
+						this.dataset.editing = 'false';
+						const submitBtn = document.querySelector('#voitureForm button[type="submit"]');
+						submitBtn.innerHTML = '<i class="bi bi-save"></i> Enregistrer la voiture';
+						submitBtn.classList.remove('btn-warning');
+						submitBtn.classList.add('btn-primary');
+						delete submitBtn.dataset.editingId;
+						
+						await loadVoitures();
+					} catch (err) {
+						console.error('Erreur mise à jour:', err);
+						showAlert('danger', 'Erreur lors de la mise à jour');
+					}
+				}
+			});
+			
+			// Filtrer les voitures
+			document.getElementById('applyFiltersBtn').addEventListener('click', async () => {
+				const marque = document.getElementById('filterMarque').value;
+				const carburant = document.getElementById('filterCarburant').value;
+				const etat = document.getElementById('filterEtat').value;
+				const minAnnee = document.getElementById('filterMinAnnee').value;
+				const maxAnnee = document.getElementById('filterMaxAnnee').value;
+				
+				let url = `${API_BASE}/voitures/search?`;
+				const params = [];
+				if (marque) params.push(`marque=${encodeURIComponent(marque)}`);
+				if (carburant) params.push(`carburant=${encodeURIComponent(carburant)}`);
+				if (etat) params.push(`etat=${encodeURIComponent(etat)}`);
+				if (minAnnee) params.push(`minAnnee=${encodeURIComponent(minAnnee)}`);
+				if (maxAnnee) params.push(`maxAnnee=${encodeURIComponent(maxAnnee)}`);
+				
+				url += params.join('&');
+				
+				try {
+					const res = await fetch(url);
+					if (!res.ok) throw new Error('Erreur filtrage');
+					const voitures = await res.json();
+					
+					const tbody = document.querySelector('#voituresTable tbody');
+					tbody.innerHTML = '';
+					voitures.forEach(v => {
+						const tr = document.createElement('tr');
+						tr.innerHTML = `
+							<td><strong>${v._id || ''}</strong></td>
+							<td>${v.marque || ''}</td>
+							<td>${v.modele || ''}</td>
+							<td>${v.annee || ''}</td>
+							<td><span class="badge bg-info">${v.carburant || ''}</span></td>
+							<td>${v.kilometrage ? v.kilometrage.toLocaleString() : ''}</td>
+							<td>
+								<span class="badge ${getEtatBadgeClass(v.etat)}">${getEtatText(v.etat)}</span>
+							</td>
+							<td><strong>${v.tarifJournalier ? v.tarifJournalier.toFixed(2) + '€' : ''}</strong></td>
+							<td>${v.createdAt ? new Date(v.createdAt).toLocaleDateString() : ''}</td>
+							<td>
+								<button class="btn btn-sm btn-warning" data-id="${v._id}" data-action="edit">
+									<i class="bi bi-pencil"></i>
+								</button>
+								<button class="btn btn-sm btn-danger ms-1" data-id="${v._id}" data-action="delete">
+									<i class="bi bi-trash"></i>
+								</button>
+							</td>
+						`;
+						tbody.appendChild(tr);
+					});
+				} catch (err) {
+					console.error('Erreur filtrage:', err);
+					showAlert('danger', 'Erreur lors du filtrage');
+				}
+			});
+			
+			// Trier les voitures
+			document.getElementById('sortBtn').addEventListener('click', async () => {
+				const sortValue = document.getElementById('sortField').value;
+				
+				try {
+					const res = await fetch(`${API_BASE}/voitures/sort?sort=${encodeURIComponent(sortValue)}`);
+					if (!res.ok) throw new Error('Erreur tri');
+					const voitures = await res.json();
+					
+					const tbody = document.querySelector('#voituresTable tbody');
+					tbody.innerHTML = '';
+					voitures.forEach(v => {
+						const tr = document.createElement('tr');
+						tr.innerHTML = `
+							<td><strong>${v._id || ''}</strong></td>
+							<td>${v.marque || ''}</td>
+							<td>${v.modele || ''}</td>
+							<td>${v.annee || ''}</td>
+							<td><span class="badge bg-info">${v.carburant || ''}</span></td>
+							<td>${v.kilometrage ? v.kilometrage.toLocaleString() : ''}</td>
+							<td>
+								<span class="badge ${getEtatBadgeClass(v.etat)}">${getEtatText(v.etat)}</span>
+							</td>
+							<td><strong>${v.tarifJournalier ? v.tarifJournalier.toFixed(2) + '€' : ''}</strong></td>
+							<td>${v.createdAt ? new Date(v.createdAt).toLocaleDateString() : ''}</td>
+							<td>
+								<button class="btn btn-sm btn-warning" data-id="${v._id}" data-action="edit">
+									<i class="bi bi-pencil"></i>
+								</button>
+								<button class="btn btn-sm btn-danger ms-1" data-id="${v._id}" data-action="delete">
+									<i class="bi bi-trash"></i>
+								</button>
+							</td>
+						`;
+						tbody.appendChild(tr);
+					});
+				} catch (err) {
+					console.error('Erreur tri:', err);
+					showAlert('danger', 'Erreur lors du tri');
+				}
+			});
+			
+			// Charger les statistiques voitures
+			async function loadStatsVoitures() {
+				try {
+					const res = await fetch(`${API_BASE}/voitures/stats`);
+					if (!res.ok) throw new Error('Erreur stats');
+					const stats = await res.json();
+					
+					// Totaux
+					document.getElementById('statTotalVoitures').textContent = 
+						stats.totals?.[0]?.total || '0';
+					
+					// Calculer les états
+					const disponibles = stats.countByEtat?.find(e => e._id === 'available')?.count || 0;
+					const maintenance = stats.countByEtat?.find(e => e._id === 'maintenance')?.count || 0;
+					document.getElementById('statDisponibles').textContent = disponibles;
+					document.getElementById('statMaintenance').textContent = maintenance;
+					
+					// Tarif moyen
+					const tarifMoyen = stats.pricing?.[0]?.avgTarif;
+					document.getElementById('statTarifMoyen').textContent = 
+						tarifMoyen ? tarifMoyen.toFixed(2) + '€' : '-';
+					
+					// Répartition carburant
+					const carburantList = document.getElementById('statsCarburant');
+					carburantList.innerHTML = '';
+					if (stats.countByCarburant) {
+						stats.countByCarburant.forEach(c => {
+							const li = document.createElement('li');
+							li.className = 'list-group-item d-flex justify-content-between';
+							li.innerHTML = `<span>${c._id || 'Non spécifié'}</span><span class="badge bg-primary">${c.count}</span>`;
+							carburantList.appendChild(li);
+						});
+					}
+					
+					// Répartition état
+					const etatList = document.getElementById('statsEtat');
+					etatList.innerHTML = '';
+					if (stats.countByEtat) {
+						stats.countByEtat.forEach(e => {
+							const li = document.createElement('li');
+							li.className = 'list-group-item d-flex justify-content-between';
+							const badgeClass = getEtatBadgeClass(e._id);
+							li.innerHTML = `<span>${getEtatText(e._id)}</span><span class="badge ${badgeClass}">${e.count}</span>`;
+							etatList.appendChild(li);
+						});
+					}
+				} catch (err) {
+					console.error('Erreur stats voitures:', err);
+				}
+			}
+			
+			// ==================== ENTRETIENS ====================
+			
+			// Charger les entretiens
+			async function loadEntretiens(filters = {}) {
+				try {
+					let url = `${API_BASE}/entretiens`;
+					if (filters.car) url = `${API_BASE}/entretiens/car/${filters.car}`;
+					
+					const res = await fetch(url);
+					if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+					const entretiens = await res.json();
+					
+					const tbody = document.querySelector('#entretiensTable tbody');
+					tbody.innerHTML = '';
+					
+					entretiens.forEach(e => {
+						const tr = document.createElement('tr');
+						tr.innerHTML = `
+							<td><strong>${e.car?._id || e.car || ''}</strong></td>
+							<td><span class="badge ${getTypeBadgeClass(e.type)}">${getTypeText(e.type)}</span></td>
+							<td>${e.date || ''}</td>
+							<td>${e.description || ''}</td>
+							<td><strong>${e.cout ? e.cout.toFixed(2) + '€' : ''}</strong></td>
+							<td>${e.piecesReconditionneesPct || 0}%</td>
+							<td>${e.dechetsKg || 0}</td>
+							<td>
+								<button class="btn btn-sm btn-danger" data-id="${e._id}" data-action="delete-entretien">
+									<i class="bi bi-trash"></i>
+								</button>
+							</td>
+						`;
+						tbody.appendChild(tr);
+					});
+				} catch (err) {
+					console.error('Erreur chargement entretiens:', err);
+					showAlert('danger', 'Erreur lors du chargement des entretiens');
+				}
+			}
+			
+			// Créer un entretien
+			document.getElementById('entretienForm').addEventListener('submit', async (e) => {
+				e.preventDefault();
+				
+				const payload = {
+					car: document.getElementById('entretienMatr').value,
+					type: document.getElementById('entretienType').value,
+					date: document.getElementById('entretienDate').value,
+					description: document.getElementById('entretienDescription').value,
+					cout: parseFloat(document.getElementById('entretienCout').value),
+					piecesReconditionneesPct: document.getElementById('entretienPieces').value ? 
+						parseInt(document.getElementById('entretienPieces').value) : null,
+					dechetsKg: document.getElementById('entretienDechets').value ? 
+						parseFloat(document.getElementById('entretienDechets').value) : null
+				};
+				
+				try {
+					const res = await fetch(`${API_BASE}/entretiens`, {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify(payload)
+					});
+					
+					if (!res.ok) throw new Error('Création échouée');
+					
+					showAlert('success', 'Entretien créé avec succès!');
+					document.getElementById('entretienForm').reset();
+					await loadEntretiens();
+				} catch (err) {
+					console.error('Erreur création entretien:', err);
+					showAlert('danger', 'Erreur lors de la création de l\'entretien');
+				}
+			});
+			
+			// Supprimer un entretien
+			document.querySelector('#entretiensTable tbody').addEventListener('click', async (e) => {
+				const btn = e.target.closest('button');
+				if (!btn) return;
+				
+				if (btn.dataset.action === 'delete-entretien') {
+					const id = btn.dataset.id;
+					if (!confirm('Supprimer cet entretien ?')) return;
+					
+					try {
+						const res = await fetch(`${API_BASE}/entretiens/${id}`, {
+							method: 'DELETE'
+						});
+						
+						if (!res.ok) throw new Error('Suppression échouée');
+						
+						showAlert('success', 'Entretien supprimé!');
+						await loadEntretiens();
+					} catch (err) {
+						console.error('Erreur suppression entretien:', err);
+						showAlert('danger', 'Erreur lors de la suppression');
+					}
+				}
+			});
+			
+			// Filtrer les entretiens
+			document.getElementById('applyEntretienFiltersBtn').addEventListener('click', async () => {
+				const filters = {
+					car: document.getElementById('filterEntretienMatr').value || null,
+					type: document.getElementById('filterEntretienType').value || null,
+					minCout: document.getElementById('filterEntretienMinCout').value || null,
+					maxCout: document.getElementById('filterEntretienMaxCout').value || null
+				};
+				
+				try {
+					let url = `${API_BASE}/entretiens/search?`;
+					const params = [];
+					if (filters.car) params.push(`car=${encodeURIComponent(filters.car)}`);
+					if (filters.type) params.push(`type=${encodeURIComponent(filters.type)}`);
+					if (filters.minCout) params.push(`minCout=${encodeURIComponent(filters.minCout)}`);
+					if (filters.maxCout) params.push(`maxCout=${encodeURIComponent(filters.maxCout)}`);
+					
+					if (params.length > 0) {
+						url += params.join('&');
+						const res = await fetch(url);
+						if (!res.ok) throw new Error('Erreur filtrage');
+						const entretiens = await res.json();
+						
+						const tbody = document.querySelector('#entretiensTable tbody');
+						tbody.innerHTML = '';
+						entretiens.forEach(e => {
+							const tr = document.createElement('tr');
+							tr.innerHTML = `
+								<td><strong>${e.car?._id || e.car || ''}</strong></td>
+								<td><span class="badge ${getTypeBadgeClass(e.type)}">${getTypeText(e.type)}</span></td>
+								<td>${e.date || ''}</td>
+								<td>${e.description || ''}</td>
+								<td><strong>${e.cout ? e.cout.toFixed(2) + '€' : ''}</strong></td>
+								<td>${e.piecesReconditionneesPct || 0}%</td>
+								<td>${e.dechetsKg || 0}</td>
+								<td>
+									<button class="btn btn-sm btn-danger" data-id="${e._id}" data-action="delete-entretien">
+										<i class="bi bi-trash"></i>
+									</button>
+								</td>
+							`;
+							tbody.appendChild(tr);
+						});
+					} else {
+						await loadEntretiens();
+					}
+				} catch (err) {
+					console.error('Erreur filtrage entretiens:', err);
+					showAlert('danger', 'Erreur lors du filtrage');
+				}
+			});
+			
+			// Charger les statistiques entretiens
+			async function loadStatsEntretiens() {
+				try {
+					const res = await fetch(`${API_BASE}/entretiens/stats`);
+					if (!res.ok) throw new Error('Erreur stats entretiens');
+					const stats = await res.json();
+					
+					const coutTotal = stats.costSummary?.[0]?.totalCout || 0;
+					const coutMoyen = stats.costSummary?.[0]?.avgCout || 0;
+					const totalEntretiens = stats.totals?.[0]?.total || 0;
+					
+					document.getElementById('statCoutTotal').textContent = coutTotal.toFixed(2) + '€';
+					document.getElementById('statCoutMoyen').textContent = coutMoyen.toFixed(2) + '€';
+					document.getElementById('statTotalEntretiens').textContent = totalEntretiens;
+				} catch (err) {
+					console.error('Erreur stats entretiens:', err);
+				}
+			}
+			
+			// Maintenance prédictive
+			document.getElementById('predictBtn').addEventListener('click', async () => {
+				try {
+					const res = await fetch(`${API_BASE}/entretiens/predict`);
+					if (!res.ok) throw new Error('Erreur prédiction');
+					const prediction = await res.json();
+					
+					document.getElementById('predict15jours').textContent = 
+						prediction.resume?.a_venir_15_jours || '0';
+					document.getElementById('predictAlertes').textContent = 
+						prediction.alertes_prioritaires?.length || '0';
+					document.getElementById('predictCout30j').textContent = 
+						prediction.resume?.cout_estime_30_jours?.toFixed(2) || '0';
+					
+					// Afficher les détails
+					const detailsDiv = document.getElementById('predictDetails');
+					detailsDiv.style.display = 'block';
+					
+					let detailsHTML = `
+						<h6>Détails de la maintenance prédictive</h6>
+						<div class="alert alert-info">
+							<strong>Résumé:</strong> ${prediction.resume?.vehicules_total || 0} voitures, 
+							${prediction.resume?.entretiens_total || 0} entretiens historiques
+						</div>
+					`;
+					
+					if (prediction.vehicules_a_maintenir_15j?.length > 0) {
+						detailsHTML += `
+							<h6>Voitures à maintenir dans 15 jours:</h6>
+							<ul class="list-group">
+						`;
+						prediction.vehicules_a_maintenir_15j.forEach(v => {
+							detailsHTML += `
+								<li class="list-group-item">
+									${v.id} - ${v.marque} ${v.modele} 
+									<span class="badge bg-warning">${v.urgence_maintenance_jours} jours</span>
+									<span class="badge bg-secondary">Coût estimé: ${v.cout_estime}€</span>
+								</li>
+							`;
+						});
+						detailsHTML += `</ul>`;
+					}
+					
+					detailsDiv.innerHTML = detailsHTML;
+					
+				} catch (err) {
+					console.error('Erreur prédiction:', err);
+					showAlert('danger', 'Erreur lors de la prédiction');
+				}
+			});
+			
+			document.getElementById('predictDetailsBtn').addEventListener('click', () => {
+				const detailsDiv = document.getElementById('predictDetails');
+				detailsDiv.style.display = detailsDiv.style.display === 'none' ? 'block' : 'none';
+			});
+			
+			// ==================== UTILITAIRES ====================
+			
+			function getEtatBadgeClass(etat) {
+				switch(etat) {
+					case 'available': return 'bg-success';
+					case 'rented': return 'bg-primary';
+					case 'maintenance': return 'bg-warning';
+					case 'unavailable': return 'bg-danger';
+					default: return 'bg-secondary';
+				}
+			}
+			
+			function getEtatText(etat) {
+				switch(etat) {
+					case 'available': return 'Disponible';
+					case 'rented': return 'Louée';
+					case 'maintenance': return 'Maintenance';
+					case 'unavailable': return 'Indisponible';
+					default: return etat || 'Inconnu';
+				}
+			}
+			
+			function getTypeBadgeClass(type) {
+				switch(type) {
+					case 'routine': return 'bg-info';
+					case 'reparation': return 'bg-danger';
+					case 'inspection': return 'bg-warning';
+					case 'autre': return 'bg-secondary';
+					default: return 'bg-light text-dark';
+				}
+			}
+			
+			function getTypeText(type) {
+				switch(type) {
+					case 'routine': return 'Routine';
+					case 'reparation': return 'Réparation';
+					case 'inspection': return 'Inspection';
+					case 'autre': return 'Autre';
+					default: return type || 'Inconnu';
+				}
+			}
+			
+			function showAlert(type, message) {
+				const alertDiv = document.createElement('div');
+				alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 end-0 m-3`;
+				alertDiv.style.zIndex = '1050';
+				alertDiv.innerHTML = `
+					${message}
+					<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+				`;
+				
+				document.body.appendChild(alertDiv);
+				
+				// Auto-remove after 5 seconds
+				setTimeout(() => {
+					if (alertDiv.parentNode) {
+						alertDiv.remove();
+					}
+				}, 5000);
+			}
+			
+			// ==================== INITIALISATION ====================
+			
+			// Boutons de rafraîchissement
+			document.getElementById('refreshVoituresBtn').addEventListener('click', () => {
+				loadVoitures();
+				loadStatsVoitures();
+			});
+			
+			document.getElementById('refreshEntretiensBtn').addEventListener('click', () => {
+				loadEntretiens();
+				loadStatsEntretiens();
+			});
+			
+			document.getElementById('refreshStatsVoituresBtn').addEventListener('click', loadStatsVoitures);
+			document.getElementById('refreshStatsEntretiensBtn').addEventListener('click', loadStatsEntretiens);
+			
+			// Chargement initial
+			document.addEventListener('DOMContentLoaded', () => {
+				loadVoitures();
+				loadEntretiens();
+				loadStatsVoitures();
+				loadStatsEntretiens();
+				
+				// Définir la date d'aujourd'hui par défaut pour les entretiens
+				const today = new Date().toISOString().split('T')[0];
+				document.getElementById('entretienDate').value = today;
+			});
+			
+		</script>
+		
+		<!-- Bootstrap JS -->
+		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+	</body>
+</html>
