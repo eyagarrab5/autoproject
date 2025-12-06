@@ -48,7 +48,7 @@ exports.getVoitureById = async (req, res) => {
 // Get voiture by matricule
 exports.getVoitureByMatricule = async (req, res) => {
   try {
-    const voiture = await Voiture.findById(req.params.matr);
+    const voiture = await Voiture.findOne({ matr: req.params.matr.toUpperCase() });
     if (!voiture) {
       return res.status(404).json({ message: 'Voiture not found' });
     }

@@ -69,9 +69,10 @@ app.set('io', io);
 
 // Start server
 const PORT = process.env.PORT || 3003;
-const DISCOVERY_URL = process.env.DISCOVERY_URL || 'http://discovery:3000';
+const DISCOVERY_URL = process.env.DISCOVERY_URL || 'http://localhost:3000';
 const SERVICE_NAME = 'payment-service';
-const SERVICE_URL = process.env.SERVICE_URL || `http://payment:${PORT}`;
+const SERVICE_HOST = process.env.SERVICE_HOST || 'localhost';
+const SERVICE_URL = process.env.SERVICE_URL || `http://${SERVICE_HOST}:${PORT}`;
 
 server.listen(PORT, async () => {
   console.log(`Payment Service is running on port ${PORT}`);
