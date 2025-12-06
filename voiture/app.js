@@ -38,7 +38,8 @@ app.get("/", (req, res) => {
 });
 
 const server = http.createServer(app);
-console.log("server run");
+const PORT = process.env.PORT || 4000;
+console.log(`server starting on port ${PORT}...`);
 
 const io = require("socket.io")(server);
 io.on("connection", (socket) => {
@@ -48,4 +49,6 @@ io.on("connection", (socket) => {
   });
 });
 
-server.listen(3000);
+server.listen(PORT, () => {
+  console.log(`Web app ready: http://localhost:${PORT}/voiture`);
+});

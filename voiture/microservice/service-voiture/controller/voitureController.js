@@ -172,6 +172,9 @@ async function statsVoitures(req, res) {
           pricing: [
             { $group: { _id: null, avgTarif: { $avg: '$tarifJournalier' }, minTarif: { $min: '$tarifJournalier' }, maxTarif: { $max: '$tarifJournalier' } } },
           ],
+          kmStats: [
+            { $group: { _id: null, avgKm: { $avg: '$kilometrage' }, minKm: { $min: '$kilometrage' }, maxKm: { $max: '$kilometrage' } } },
+          ],
           yearStats: [
             { $group: { _id: null, minAnnee: { $min: '$annee' }, maxAnnee: { $max: '$annee' } } },
           ],
