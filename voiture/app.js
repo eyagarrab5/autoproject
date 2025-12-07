@@ -13,6 +13,7 @@ mongo
 
 const testRouter = require("./routes/test");
 const voitureRouter = require("./routes/voiture");
+const entretienRouter = require("./microservice/service-voiture/routes/entretien");
 
 const app = express();
 app.use(express.json());
@@ -32,6 +33,7 @@ app.get('/chat', (req, res) => {
 
 app.use("/test", testRouter);
 app.use("/api/voitures", voitureRouter);
+app.use("/api/entretiens", entretienRouter); // AJOUTEZ CETTE LIGNE
 
 app.get("/", (req, res) => {
   res.send("Bienvenue sur le service voiture");

@@ -1,22 +1,108 @@
 const Voiture = require('../model/voiture'); 
 
-async function addVoiture(req,res) {
-  try{
-        console.log('addVoiture received body:', req.body);
-        
-        const voiture = new Voiture(req.body);
-        await voiture.save();
-        res.status(201).json(voiture);
-  }catch (err){
-        console.log(err);
-        if (err && err.code === 11000) {
-          // duplicate key error on unique index (likely _id)
-          return res.status(409).json({ message: 'Car already exists', keyValue: err.keyValue });
-        }
-        if (err && err.name === 'ValidationError') {
-          return res.status(400).json({ message: 'Validation error', errors: err.errors });
-        }
-        res.status(500).json({ message: 'Server error' });
+async function addVoiture(req, res) {
+  console.log('\n=== DÉBUT DE LA FONCTION addVoiture ===');
+  console.log('=== NOUVELLE DEMANDE DE CRÉATION DE VOITURE ===');
+  console.log('Méthode HTTP:', req.method);
+  console.log('URL:', req.originalUrl);
+  console.log('Headers:', JSON.stringify(req.headers, null, 2));
+  console.log('Corps de la requête reçu:', JSON.stringify(req.body, null, 2));
+  
+  // Vérifier si le corps de la requête est vide
+  if (!req.body || Object.keys(req.body).length === 0) {
+    console.error('ERREUR: Le corps de la requête est vide');
+    return res.status(400).json({ 
+      success: false, 
+      message: 'Le corps de la requête est vide' 
+    });
+  }
+  
+  try {
+    // Vérification des champs obligatoires
+    const requiredFields = ['_id', 'marque', 'modele', 'carburant'];
+    const missingFields = requiredFields.filter(field => {
+      const value = req.body[field];
+      return value === undefined || value === null || value === '';
+    });
+    
+    if (missingFields.length > 0) {
+      console.error('Champs manquants ou vides:', missingFields);
+      return res.status(400).json({ 
+        success: false,
+        message: 'Champs manquants ou invalides', 
+        missingFields,
+        receivedData: req.body
+      });
+    }
+    
+    // Nettoyage et validation des données
+    const voitureData = {
+      _id: String(req.body._id).trim(),
+      matr: String(req.body._id).trim(),
+      marque: String(req.body.marque).trim(),
+      modele: String(req.body.modele).trim(),
+      carburant: String(req.body.carburant).trim(),
+      annee: req.body.annee ? parseInt(req.body.annee) : null,
+      kilometrage: req.body.kilometrage ? parseInt(req.body.kilometrage) : 0,
+      etat: req.body.etat || 'available',
+      tarifJournalier: req.body.tarifJournalier ? parseFloat(req.body.tarifJournalier) : 0,
+      createdAt: new Date()
+    };
+
+    console.log('Données nettoyées:', JSON.stringify(voitureData, null, 2));
+    
+    // Vérification de l'existence de la voiture
+    const existingVoiture = await Voiture.findOne({ _id: voitureData._id });
+    if (existingVoiture) {
+      console.error('Voiture existe déjà avec l\'ID:', voitureData._id);
+      return res.status(409).json({ 
+        success: false,
+        message: 'Une voiture avec cette immatriculation existe déjà',
+        existingId: voitureData._id
+      });
+    }
+    
+    console.log('Tentative de création de la voiture avec les données:', voitureData);
+    
+    // Création et sauvegarde de la voiture
+    const voiture = new Voiture(voitureData);
+    const savedVoiture = await voiture.save();
+    
+    console.log('Voiture enregistrée avec succès:', savedVoiture._id);
+    
+    // Retourner la réponse avec la voiture créée
+    return res.status(201).json({
+      success: true,
+      message: 'Voiture créée avec succès',
+      data: savedVoiture
+    });
+    
+  } catch (err) {
+    console.error('Erreur lors de la création de la voiture:', err);
+    
+    // Gestion des erreurs de validation
+    if (err.name === 'ValidationError') {
+      const errors = {};
+      for (let field in err.errors) {
+        errors[field] = err.errors[field].message;
+      }
+      return res.status(400).json({ 
+        message: 'Erreur de validation', 
+        errors 
+      });
+    }
+    
+    if (err.code === 11000) {
+      return res.status(409).json({ 
+        message: 'Une voiture avec cette immatriculation existe déjà',
+        keyValue: err.keyValue 
+      });
+    }
+    
+    res.status(500).json({ 
+      message: 'Erreur serveur lors de la création de la voiture',
+      error: err.message 
+    });
   }
 }
 

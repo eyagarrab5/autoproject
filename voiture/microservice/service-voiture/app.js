@@ -1,7 +1,9 @@
 const http = require('http');
 const express = require('express');
 const mongo = require('mongoose');
+const cors = require('cors');
 const axios = require("axios");
+const path = require('path');
 const db = require('./config/dbconnection.json');
 
 mongo.connect(db.url)
@@ -35,14 +37,46 @@ const registerService = async () => {
 };
 registerService();
 
+// Configuration CORS
+app.use(cors({
+  origin: '*', // Autoriser toutes les origines
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  credentials: true,
+  optionsSuccessStatus: 200 // Pour les navigateurs plus anciens
+}));
+
+// Gestion des requêtes OPTIONS (prévol)
+app.options('*', cors());
+
 app.use(express.json());
+
+// Middleware pour les en-têtes CORS
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  
+  // Répondre aux requêtes OPTIONS
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  
+  next();
+});
+
+// Configuration du moteur de vues EJS
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, '../../views'));
 
 app.use('/test', testRouter);
 app.use("/api/voitures", voitureRouter);  // ✅ Correspond au frontend
-app.use('/entretiens', entretienRouter);
+app.use('/api/entretiens', entretienRouter);
 app.use('/notifications', notificationsRouter);
+app.get("/voiture", (req, res) => {
+  res.render('voiture');
+});
+
 app.get("/", (req, res) => {
-  res.send("bienvenue dans votre service : " + serviceName);
+  res.send("bienvenue dans votre service : " + serviceName + ". <a href='/voiture'>Accéder à la gestion des voitures</a>");
 });
 
 const server = http.createServer(app);

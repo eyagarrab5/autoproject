@@ -216,7 +216,7 @@
 								</div>
 							</div>
 						</div>
-												<div class="col-md-2 d-flex align-items-center">
+						<div class="col-md-2 d-flex align-items-center">
 							<button class="btn btn-light w-100 h-75" id="refreshStatsVoituresBtn">
 								<i class="bi bi-arrow-clockwise"></i> Actualiser
 							</button>
@@ -294,12 +294,17 @@
 									<input type="number" step="0.1" id="entretienDechets" class="form-control" min="0" />
 								</div>
 								<div class="col-12">
-									<button type="submit" class="btn btn-dark">
-										<i class="bi bi-wrench"></i> Enregistrer l'entretien
-									</button>
-									<button type="button" id="refreshEntretiensBtn" class="btn btn-secondary ms-2">
-										<i class="bi bi-arrow-clockwise"></i> Actualiser
-									</button>
+									<div class="d-flex flex-wrap gap-2">
+										<button type="submit" class="btn btn-dark">
+											<i class="bi bi-wrench"></i> Enregistrer l'entretien
+										</button>
+										<button type="button" id="cancelEditBtn" class="btn btn-outline-secondary d-none">
+											<i class="bi bi-x-lg"></i> Annuler
+										</button>
+										<button type="button" id="refreshEntretiensBtn" class="btn btn-secondary ms-auto">
+											<i class="bi bi-arrow-clockwise"></i> Actualiser
+										</button>
+									</div>
 								</div>
 							</form>
 						</div>
@@ -465,668 +470,1147 @@
 		</div>
 
 		<script>
-			const API_BASE = 'http://localhost:3000/api';
-			const API_ROOT = API_BASE.replace(/\/api$/, '');
-			const ENT_BASE = `${API_ROOT}/entretiens`;
-			
-			// ==================== VOITURES ====================
-			
-			// Charger les voitures au démarrage
-			async function loadVoitures() {
-				try {
-					const res = await fetch(`${API_BASE}/voitures`);
-					if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-					const voitures = await res.json();
-					
-					const tbody = document.querySelector('#voituresTable tbody');
-					tbody.innerHTML = '';
-					
-					// Mettre à jour les dropdowns de sélection
-					const entretienMatrSelect = document.getElementById('entretienMatr');
-					const filterEntretienMatrSelect = document.getElementById('filterEntretienMatr');
-					entretienMatrSelect.innerHTML = '<option value="">Sélectionnez une voiture...</option>';
-					filterEntretienMatrSelect.innerHTML = '<option value="">-- Toutes --</option>';
-					
-					voitures.forEach(v => {
-						// Remplir le tableau
-						const tr = document.createElement('tr');
-						tr.innerHTML = `
-							<td><strong>${v._id || ''}</strong></td>
-							<td>${v.marque || ''}</td>
-							<td>${v.modele || ''}</td>
-							<td>${v.annee || ''}</td>
-							<td><span class="badge bg-info">${v.carburant || ''}</span></td>
-							<td>${v.kilometrage ? v.kilometrage.toLocaleString() : ''}</td>
-							<td>
-								<span class="badge ${getEtatBadgeClass(v.etat)}">${getEtatText(v.etat)}</span>
-							</td>
-							<td><strong>${v.tarifJournalier ? v.tarifJournalier.toFixed(2) + ' dt' : ''}</strong></td>
-							<td>${v.createdAt ? new Date(v.createdAt).toLocaleDateString() : ''}</td>
-							<td>
-								<button class="btn btn-sm btn-warning" data-id="${v._id}" data-action="edit">
-									<i class="bi bi-pencil"></i>
-								</button>
-								<button class="btn btn-sm btn-danger ms-1" data-id="${v._id}" data-action="delete">
-									<i class="bi bi-trash"></i>
-								</button>
-							</td>
-						`;
-						tbody.appendChild(tr);
-						
-						// Ajouter aux dropdowns
-						const option1 = document.createElement('option');
-						option1.value = v._id;
-						option1.textContent = `${v._id} - ${v.marque} ${v.modele}`;
-						entretienMatrSelect.appendChild(option1);
-						
-						const option2 = document.createElement('option');
-						option2.value = v._id;
-						option2.textContent = `${v._id} - ${v.marque} ${v.modele}`;
-						filterEntretienMatrSelect.appendChild(option2);
-					});
-				} catch (err) {
-					console.error('Erreur chargement voitures:', err);
-					showAlert('danger', 'Erreur lors du chargement des voitures: ' + err.message);
-				}
-			}
-			
-			// Créer une voiture
-			document.getElementById('voitureForm').addEventListener('submit', async (e) => {
-				e.preventDefault();
-				
-				const payload = {
-					_id: document.getElementById('matr').value.toUpperCase(),
-					matr: document.getElementById('matr').value.toUpperCase(),
-					marque: document.getElementById('marque').value,
-					modele: document.getElementById('modele').value,
-					annee: document.getElementById('annee').value ? parseInt(document.getElementById('annee').value) : null,
-					carburant: document.getElementById('carburant').value,
-					kilometrage: document.getElementById('kilometrage').value ? parseInt(document.getElementById('kilometrage').value) : null,
-					etat: document.getElementById('etat').value,
-					tarifJournalier: document.getElementById('tarifJournalier').value ? parseFloat(document.getElementById('tarifJournalier').value) : null
-				};
-				
-				try {
-					const res = await fetch(`${API_BASE}/voitures`, {
-						method: 'POST',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify(payload)
-					});
-					
-					if (res.status === 409) {
-						throw new Error('Cette immatriculation existe déjà');
-					}
-					if (!res.ok) {
-						throw new Error(`Erreur ${res.status}: ${res.statusText}`);
-					}
-					
-					showAlert('success', 'Voiture créée avec succès!');
-					document.getElementById('voitureForm').reset();
-					await loadVoitures();
-				} catch (err) {
-					console.error('Erreur création voiture:', err);
-					showAlert('danger', 'Erreur lors de la création: ' + err.message);
-				}
-			});
-			
-			// Gestion des actions (éditer/supprimer)
-			document.querySelector('#voituresTable tbody').addEventListener('click', async (e) => {
-				const btn = e.target.closest('button');
-				if (!btn) return;
-				
-				const id = btn.dataset.id;
-				const action = btn.dataset.action;
-				
-				if (action === 'delete') {
-					if (!confirm(`Supprimer la voiture ${id} ? Cette action est irréversible.`)) return;
-					
-					try {
-						const res = await fetch(`${API_BASE}/voitures/${id}`, {
-							method: 'DELETE'
-						});
-						
-						if (!res.ok) throw new Error('Suppression échouée');
-						
-						showAlert('success', 'Voiture supprimée avec succès!');
-						await loadVoitures();
-					} catch (err) {
-						console.error('Erreur suppression:', err);
-						showAlert('danger', 'Erreur lors de la suppression');
-					}
-				} else if (action === 'edit') {
-					// Récupérer les données de la voiture
-					try {
-						const res = await fetch(`${API_BASE}/voitures/${id}`);
-						if (!res.ok) throw new Error('Impossible de récupérer les données');
-						
-						const voiture = await res.json();
-						
-						// Remplir le formulaire avec les données
-						document.getElementById('matr').value = voiture._id;
-						document.getElementById('marque').value = voiture.marque || '';
-						document.getElementById('modele').value = voiture.modele || '';
-						document.getElementById('annee').value = voiture.annee || '';
-						document.getElementById('carburant').value = voiture.carburant || 'essence';
-						document.getElementById('kilometrage').value = voiture.kilometrage || '';
-						document.getElementById('etat').value = voiture.etat || 'available';
-						document.getElementById('tarifJournalier').value = voiture.tarifJournalier || '';
-						
-						// Changer le texte du bouton
-						const submitBtn = document.querySelector('#voitureForm button[type="submit"]');
-						submitBtn.innerHTML = '<i class="bi bi-save"></i> Mettre à jour';
-						submitBtn.classList.remove('btn-primary');
-						submitBtn.classList.add('btn-warning');
-						submitBtn.dataset.editingId = id;
-						
-						// Changer le comportement du formulaire temporairement
-						const form = document.getElementById('voitureForm');
-						form.dataset.editing = 'true';
-						
-						showAlert('info', `Édition de la voiture ${id}. Modifiez les champs et cliquez sur "Mettre à jour".`);
-					} catch (err) {
-						console.error('Erreur édition:', err);
-						showAlert('danger', 'Erreur lors de la récupération des données');
-					}
-				}
-			});
-			
-			// Gérer la mise à jour du formulaire
-			document.getElementById('voitureForm').addEventListener('submit', async function(e) {
-				if (this.dataset.editing === 'true') {
-					e.preventDefault();
-					
-					const id = document.querySelector('#voitureForm button[type="submit"]').dataset.editingId;
-					const payload = {
-						marque: document.getElementById('marque').value,
-						modele: document.getElementById('modele').value,
-						annee: document.getElementById('annee').value ? parseInt(document.getElementById('annee').value) : null,
-						carburant: document.getElementById('carburant').value,
-						kilometrage: document.getElementById('kilometrage').value ? parseInt(document.getElementById('kilometrage').value) : null,
-						etat: document.getElementById('etat').value,
-						tarifJournalier: document.getElementById('tarifJournalier').value ? parseFloat(document.getElementById('tarifJournalier').value) : null
-					};
-					
-					try {
-						const res = await fetch(`${API_BASE}/voitures/${id}`, {
-							method: 'PUT',
-							headers: { 'Content-Type': 'application/json' },
-							body: JSON.stringify(payload)
-						});
-						
-						if (!res.ok) throw new Error('Mise à jour échouée');
-						
-						showAlert('success', 'Voiture mise à jour avec succès!');
-						
-						// Réinitialiser le formulaire
-						this.reset();
-						this.dataset.editing = 'false';
-						const submitBtn = document.querySelector('#voitureForm button[type="submit"]');
-						submitBtn.innerHTML = '<i class="bi bi-save"></i> Enregistrer la voiture';
-						submitBtn.classList.remove('btn-warning');
-						submitBtn.classList.add('btn-primary');
-						delete submitBtn.dataset.editingId;
-						
-						await loadVoitures();
-					} catch (err) {
-						console.error('Erreur mise à jour:', err);
-						showAlert('danger', 'Erreur lors de la mise à jour');
-					}
-				}
-			});
-			
-			// Filtrer les voitures
-			document.getElementById('applyFiltersBtn').addEventListener('click', async () => {
-				const marque = document.getElementById('filterMarque').value;
-				const carburant = document.getElementById('filterCarburant').value;
-				const etat = document.getElementById('filterEtat').value;
-				const minAnnee = document.getElementById('filterMinAnnee').value;
-				const maxAnnee = document.getElementById('filterMaxAnnee').value;
-				
-				let url = `${API_BASE}/voitures/search?`;
-				const params = [];
-				if (marque) params.push(`marque=${encodeURIComponent(marque)}`);
-				if (carburant) params.push(`carburant=${encodeURIComponent(carburant)}`);
-				if (etat) params.push(`etat=${encodeURIComponent(etat)}`);
-				if (minAnnee) params.push(`minAnnee=${encodeURIComponent(minAnnee)}`);
-				if (maxAnnee) params.push(`maxAnnee=${encodeURIComponent(maxAnnee)}`);
-				
-				url += params.join('&');
-				
-				try {
-					const res = await fetch(url);
-					if (!res.ok) throw new Error('Erreur filtrage');
-					const voitures = await res.json();
-					
-					const tbody = document.querySelector('#voituresTable tbody');
-					tbody.innerHTML = '';
-					voitures.forEach(v => {
-						const tr = document.createElement('tr');
-						tr.innerHTML = `
-							<td><strong>${v._id || ''}</strong></td>
-							<td>${v.marque || ''}</td>
-							<td>${v.modele || ''}</td>
-							<td>${v.annee || ''}</td>
-							<td><span class="badge bg-info">${v.carburant || ''}</span></td>
-							<td>${v.kilometrage ? v.kilometrage.toLocaleString() : ''}</td>
-							<td>
-								<span class="badge ${getEtatBadgeClass(v.etat)}">${getEtatText(v.etat)}</span>
-							</td>
-							<td><strong>${v.tarifJournalier ? v.tarifJournalier.toFixed(2) + ' dt' : ''}</strong></td>
-							<td>${v.createdAt ? new Date(v.createdAt).toLocaleDateString() : ''}</td>
-							<td>
-								<button class="btn btn-sm btn-warning" data-id="${v._id}" data-action="edit">
-									<i class="bi bi-pencil"></i>
-								</button>
-								<button class="btn btn-sm btn-danger ms-1" data-id="${v._id}" data-action="delete">
-									<i class="bi bi-trash"></i>
-								</button>
-							</td>
-						`;
-						tbody.appendChild(tr);
-					});
-				} catch (err) {
-					console.error('Erreur filtrage:', err);
-					showAlert('danger', 'Erreur lors du filtrage');
-				}
-			});
-			
-			// Tri des voitures (client)
-			document.getElementById('applySortBtn').addEventListener('click', () => {
-				const param = document.getElementById('sortParam').value; // tarifJournalier | kilometrage | annee
-				const order = document.getElementById('sortOrder').value; // asc | desc
-				const colMap = { tarifJournalier: 7, kilometrage: 5, annee: 3 };
-				const col = colMap[param] || 7;
-				const factor = order === 'asc' ? 1 : -1;
-				const tbody = document.querySelector('#voituresTable tbody');
-				const rows = Array.from(tbody.querySelectorAll('tr'));
-				const parseNumber = (text) => {
-					if (!text) return NaN;
-					const cleaned = text.replace(/[^0-9.,-]/g, '').replace(/,/g, '');
-					return parseFloat(cleaned);
-				};
-				rows.sort((r1, r2) => {
-					const t1 = r1.children[col]?.textContent || '';
-					const t2 = r2.children[col]?.textContent || '';
-					const n1 = parseNumber(t1);
-					const n2 = parseNumber(t2);
-					const v1 = isNaN(n1) ? Number.NEGATIVE_INFINITY : n1;
-					const v2 = isNaN(n2) ? Number.NEGATIVE_INFINITY : n2;
-					if (v1 < v2) return -1 * factor;
-					if (v1 > v2) return 1 * factor;
-					return 0;
-				});
-				rows.forEach(r => tbody.appendChild(r));
-			});
+	// Configuration de l'API
+const API_BASE = 'http://localhost:3000/api';
+const API_VOITURES = `${API_BASE}/voitures`;
+const ENT_BASE = `${API_BASE}/entretiens`;
 
-			// Charger les statistiques voitures
-			async function loadStatsVoitures() {
-				try {
-					const res = await fetch(`${API_BASE}/voitures/stats`);
-					if (!res.ok) throw new Error('Erreur stats');
-					const stats = await res.json();
-					
-					// Totaux
-					document.getElementById('statTotalVoitures').textContent = 
-						stats.totals?.[0]?.total || '0';
-					
-					// Calculer les états
-					const disponibles = stats.countByEtat?.find(e => e._id === 'available')?.count || 0;
-					const maintenance = stats.countByEtat?.find(e => e._id === 'maintenance')?.count || 0;
-					document.getElementById('statDisponibles').textContent = disponibles;
-					document.getElementById('statMaintenance').textContent = maintenance;
-					
-					// Tarif moyen
-					const tarifMoyen = stats.pricing?.[0]?.avgTarif;
-					document.getElementById('statTarifMoyen').textContent = 
-						tarifMoyen ? tarifMoyen.toFixed(2) + ' dt' : '-';
-					
-										
-					// Répartition carburant
-					const carburantList = document.getElementById('statsCarburant');
-					carburantList.innerHTML = '';
-					if (stats.countByCarburant) {
-						stats.countByCarburant.forEach(c => {
-							const li = document.createElement('li');
-							li.className = 'list-group-item d-flex justify-content-between';
-							li.innerHTML = `<span>${c._id || 'Non spécifié'}</span><span class="badge bg-primary">${c.count}</span>`;
-							carburantList.appendChild(li);
-						});
-					}
-					
-					// Répartition état
-					const etatList = document.getElementById('statsEtat');
-					etatList.innerHTML = '';
-					if (stats.countByEtat) {
-						stats.countByEtat.forEach(e => {
-							const li = document.createElement('li');
-							li.className = 'list-group-item d-flex justify-content-between';
-							const badgeClass = getEtatBadgeClass(e._id);
-							li.innerHTML = `<span>${getEtatText(e._id)}</span><span class="badge ${badgeClass}">${e.count}</span>`;
-							etatList.appendChild(li);
-						});
-					}
-				} catch (err) {
-					console.error('Erreur stats voitures:', err);
-				}
-			}
-			
-			// ==================== ENTRETIENS ====================
-			
-			// Charger les entretiens
-			async function loadEntretiens(filters = {}) {
-				try {
-					let url = `${ENT_BASE}`;
-					if (filters.car) url = `${ENT_BASE}/car/${filters.car}`;
-					
-					const res = await fetch(url);
-					if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-					const entretiens = await res.json();
-					
-					const tbody = document.querySelector('#entretiensTable tbody');
-					tbody.innerHTML = '';
-					
-					entretiens.forEach(e => {
-						const tr = document.createElement('tr');
-						tr.innerHTML = `
-							<td><strong>${e.car?._id || e.car || ''}</strong></td>
-							<td><span class="badge ${getTypeBadgeClass(e.type)}">${getTypeText(e.type)}</span></td>
-							<td>${e.date || ''}</td>
-							<td>${e.description || ''}</td>
-							<td><strong>${e.cout ? e.cout.toFixed(2) + ' dt' : ''}</strong></td>
-							<td>${e.piecesReconditionneesPct || 0}%</td>
-							<td>${e.dechetsKg || 0}</td>
-							<td>
-								<button class="btn btn-sm btn-danger" data-id="${e._id}" data-action="delete-entretien">
-									<i class="bi bi-trash"></i>
-								</button>
-							</td>
-						`;
-						tbody.appendChild(tr);
-					});
-				} catch (err) {
-					console.error('Erreur chargement entretiens:', err);
-					showAlert('danger', 'Erreur lors du chargement des entretiens');
-				}
-			}
-			
-			// Créer un entretien
-			document.getElementById('entretienForm').addEventListener('submit', async (e) => {
-				e.preventDefault();
-				
-				const payload = {
-					car: document.getElementById('entretienMatr').value,
-					type: document.getElementById('entretienType').value,
-					date: document.getElementById('entretienDate').value,
-					description: document.getElementById('entretienDescription').value,
-					cout: parseFloat(document.getElementById('entretienCout').value),
-					piecesReconditionneesPct: document.getElementById('entretienPieces').value ? 
-						parseInt(document.getElementById('entretienPieces').value) : null,
-					dechetsKg: document.getElementById('entretienDechets').value ? 
-						parseFloat(document.getElementById('entretienDechets').value) : null
-				};
-				
-				try {
-					const res = await fetch(`${ENT_BASE}`, {
-						method: 'POST',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify(payload)
-					});
-					
-					if (!res.ok) throw new Error('Création échouée');
-					
-					showAlert('success', 'Entretien créé avec succès!');
-					document.getElementById('entretienForm').reset();
-					await loadEntretiens();
-				} catch (err) {
-					console.error('Erreur création entretien:', err);
-					showAlert('danger', 'Erreur lors de la création de l\'entretien');
-				}
-			});
-			
-			// Supprimer un entretien
-			document.querySelector('#entretiensTable tbody').addEventListener('click', async (e) => {
-				const btn = e.target.closest('button');
-				if (!btn) return;
-				
-				if (btn.dataset.action === 'delete-entretien') {
-					const id = btn.dataset.id;
-					if (!confirm('Supprimer cet entretien ?')) return;
-					
-					try {
-						const res = await fetch(`${ENT_BASE}/${id}`, {
-							method: 'DELETE'
-						});
-						
-						if (!res.ok) throw new Error('Suppression échouée');
-						
-						showAlert('success', 'Entretien supprimé!');
-						await loadEntretiens();
-					} catch (err) {
-						console.error('Erreur suppression entretien:', err);
-						showAlert('danger', 'Erreur lors de la suppression');
-					}
-				}
-			});
-			
-			// Filtrer les entretiens
-			document.getElementById('applyEntretienFiltersBtn').addEventListener('click', async () => {
-				const filters = {
-					car: document.getElementById('filterEntretienMatr').value || null,
-					type: document.getElementById('filterEntretienType').value || null,
-					minCout: document.getElementById('filterEntretienMinCout').value || null,
-					maxCout: document.getElementById('filterEntretienMaxCout').value || null
-				};
-				
-				try {
-					let url = `${ENT_BASE}/search?`;
-					const params = [];
-					if (filters.car) params.push(`car=${encodeURIComponent(filters.car)}`);
-					if (filters.type) params.push(`type=${encodeURIComponent(filters.type)}`);
-					if (filters.minCout) params.push(`minCout=${encodeURIComponent(filters.minCout)}`);
-					if (filters.maxCout) params.push(`maxCout=${encodeURIComponent(filters.maxCout)}`);
-					
-					if (params.length > 0) {
-						url += params.join('&');
-						const res = await fetch(url);
-						if (!res.ok) throw new Error('Erreur filtrage');
-						const entretiens = await res.json();
-						
-						const tbody = document.querySelector('#entretiensTable tbody');
-						tbody.innerHTML = '';
-						entretiens.forEach(e => {
-							const tr = document.createElement('tr');
-							tr.innerHTML = `
-								<td><strong>${e.car?._id || e.car || ''}</strong></td>
-								<td><span class="badge ${getTypeBadgeClass(e.type)}">${getTypeText(e.type)}</span></td>
-								<td>${e.date || ''}</td>
-								<td>${e.description || ''}</td>
-								<td><strong>${e.cout ? e.cout.toFixed(2) + ' dt' : ''}</strong></td>
-								<td>${e.piecesReconditionneesPct || 0}%</td>
-								<td>${e.dechetsKg || 0}</td>
-								<td>
-									<button class="btn btn-sm btn-danger" data-id="${e._id}" data-action="delete-entretien">
-										<i class="bi bi-trash"></i>
-									</button>
-								</td>
-							`;
-							tbody.appendChild(tr);
-						});
-					} else {
-						await loadEntretiens();
-					}
-				} catch (err) {
-					console.error('Erreur filtrage entretiens:', err);
-					showAlert('danger', 'Erreur lors du filtrage');
-				}
-			});
-			
-			// Charger les statistiques entretiens
-			async function loadStatsEntretiens() {
-				try {
-					const res = await fetch(`${ENT_BASE}/stats`);
-					if (!res.ok) throw new Error('Erreur stats entretiens');
-					const stats = await res.json();
-					
-					const coutTotal = stats.costSummary?.[0]?.totalCout || 0;
-					const coutMoyen = stats.costSummary?.[0]?.avgCout || 0;
-					const totalEntretiens = stats.totals?.[0]?.total || 0;
-					
-					document.getElementById('statCoutTotal').textContent = coutTotal.toFixed(2) + ' dt';
-					document.getElementById('statCoutMoyen').textContent = coutMoyen.toFixed(2) + ' dt';
-					document.getElementById('statTotalEntretiens').textContent = totalEntretiens;
-				} catch (err) {
-					console.error('Erreur stats entretiens:', err);
-				}
-			}
-			
-			// Maintenance prédictive
-			document.getElementById('predictBtn').addEventListener('click', async () => {
-				try {
-					const res = await fetch(`${ENT_BASE}/predict`);
-					if (!res.ok) throw new Error('Erreur prédiction');
-					const prediction = await res.json();
-					
-					document.getElementById('predict15jours').textContent = 
-						prediction.resume?.a_venir_15_jours || '0';
-					document.getElementById('predictAlertes').textContent = 
-						prediction.alertes_prioritaires?.length || '0';
-					document.getElementById('predictCout30j').textContent = 
-						prediction.resume?.cout_estime_30_jours?.toFixed(2) || '0';
-					
-					// Afficher les détails
-					const detailsDiv = document.getElementById('predictDetails');
-					detailsDiv.style.display = 'block';
-					
-					let detailsHTML = `
-						<h6>Détails de la maintenance prédictive</h6>
-						<div class="alert alert-info">
-							<strong>Résumé:</strong> ${prediction.resume?.vehicules_total || 0} voitures, 
-							${prediction.resume?.entretiens_total || 0} entretiens historiques
-						</div>
-					`;
-					
-					if (prediction.vehicules_a_maintenir_15j?.length > 0) {
-						detailsHTML += `
-							<h6>Voitures à maintenir dans 15 jours:</h6>
-							<ul class="list-group">
-						`;
-						prediction.vehicules_a_maintenir_15j.forEach(v => {
-							detailsHTML += `
-								<li class="list-group-item">
-									${v.id} - ${v.marque} ${v.modele} 
-									<span class="badge bg-warning">${v.urgence_maintenance_jours} jours</span>
-									<span class="badge bg-secondary">Coût estimé: ${v.cout_estime} dt</span>
-								</li>
-							`;
-						});
-						detailsHTML += `</ul>`;
-					}
-					
-					detailsDiv.innerHTML = detailsHTML;
-					
-				} catch (err) {
-					console.error('Erreur prédiction:', err);
-					showAlert('danger', 'Erreur lors de la prédiction');
-				}
-			});
-			
-			document.getElementById('predictDetailsBtn').addEventListener('click', () => {
-				const detailsDiv = document.getElementById('predictDetails');
-				detailsDiv.style.display = detailsDiv.style.display === 'none' ? 'block' : 'none';
-			});
-			
-			// ==================== UTILITAIRES ====================
-			
-			function getEtatBadgeClass(etat) {
-				switch(etat) {
-					case 'available': return 'bg-success';
-					case 'rented': return 'bg-primary';
-					case 'maintenance': return 'bg-warning';
-					case 'unavailable': return 'bg-danger';
-					default: return 'bg-secondary';
-				}
-			}
-			
-			function getEtatText(etat) {
-				switch(etat) {
-					case 'available': return 'Disponible';
-					case 'rented': return 'Louée';
-					case 'maintenance': return 'Maintenance';
-					case 'unavailable': return 'Indisponible';
-					default: return etat || 'Inconnu';
-				}
-			}
-			
-			function getTypeBadgeClass(type) {
-				switch(type) {
-					case 'routine': return 'bg-info';
-					case 'reparation': return 'bg-danger';
-					case 'inspection': return 'bg-warning';
-					case 'autre': return 'bg-secondary';
-					default: return 'bg-light text-dark';
-				}
-			}
-			
-			function getTypeText(type) {
-				switch(type) {
-					case 'routine': return 'Routine';
-					case 'reparation': return 'Réparation';
-					case 'inspection': return 'Inspection';
-					case 'autre': return 'Autre';
-					default: return type || 'Inconnu';
-				}
-			}
-			
-			function showAlert(type, message) {
-				const alertDiv = document.createElement('div');
-				alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 end-0 m-3`;
-				alertDiv.style.zIndex = '1050';
-				alertDiv.innerHTML = `
-					${message}
-					<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-				`;
-				
-				document.body.appendChild(alertDiv);
-				
-				// Auto-remove after 5 seconds
-				setTimeout(() => {
-					if (alertDiv.parentNode) {
-						alertDiv.remove();
-					}
-				}, 5000);
-			}
-			
-			// ==================== INITIALISATION ====================
-			
-			// Boutons de rafraîchissement
-			document.getElementById('refreshVoituresBtn').addEventListener('click', () => {
-				loadVoitures();
-				loadStatsVoitures();
-			});
-			
-			document.getElementById('refreshEntretiensBtn').addEventListener('click', () => {
-				loadEntretiens();
-				loadStatsEntretiens();
-			});
-			
-			document.getElementById('refreshStatsVoituresBtn').addEventListener('click', loadStatsVoitures);
-			document.getElementById('refreshStatsEntretiensBtn').addEventListener('click', loadStatsEntretiens);
-			
-			// Chargement initial
-			document.addEventListener('DOMContentLoaded', () => {
-				loadVoitures();
-				loadEntretiens();
-				loadStatsVoitures();
-				loadStatsEntretiens();
-				
-				// Définir la date d'aujourd'hui par défaut pour les entretiens
-				const today = new Date().toISOString().split('T')[0];
-				document.getElementById('entretienDate').value = today;
-			});
-			
-		</script>
-		
-		<!-- Bootstrap JS -->
-		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-	</body>
+// ==================== FONCTIONS UTILITAIRES ====================
+
+// Fonction pour obtenir la classe CSS du badge d'état
+function getEtatBadgeClass(etat) {
+    switch(etat) {
+        case 'available': return 'bg-success';
+        case 'rented': return 'bg-primary';
+        case 'maintenance': return 'bg-warning text-dark';
+        case 'unavailable': return 'bg-secondary';
+        default: return 'bg-light text-dark';
+    }
+}
+
+// Fonction pour obtenir le texte d'état lisible
+function getEtatText(etat) {
+    const etats = {
+        'available': 'Disponible',
+        'rented': 'Louée',
+        'maintenance': 'En maintenance',
+        'unavailable': 'Indisponible'
+    };
+    return etats[etat] || etat;
+}
+
+// Fonction pour obtenir la classe CSS du badge de type d'entretien
+function getTypeBadgeClass(type) {
+    switch(type) {
+        case 'routine': return 'bg-info';
+        case 'reparation': return 'bg-danger';
+        case 'inspection': return 'bg-warning';
+        case 'autre': return 'bg-secondary';
+        default: return 'bg-light text-dark';
+    }
+}
+
+// Fonction pour obtenir le texte de type d'entretien lisible
+function getTypeText(type) {
+    switch(type) {
+        case 'routine': return 'Routine';
+        case 'reparation': return 'Réparation';
+        case 'inspection': return 'Inspection';
+        case 'autre': return 'Autre';
+        default: return type || 'Inconnu';
+    }
+}
+
+// Fonction utilitaire pour afficher les alertes
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.role = 'alert';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    
+    const container = document.querySelector('.container');
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    // Supprimer l'alerte après 5 secondes
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+// ==================== CHARGEMENT DES VOITURES ====================
+
+// Charger les voitures
+async function loadVoitures() {
+    try {
+        console.log('Chargement des voitures...');
+        const res = await fetch(API_VOITURES);
+        
+        if (!res.ok) {
+            throw new Error(`Erreur HTTP! status: ${res.status}`);
+        }
+        
+        const voitures = await res.json();
+        console.log('Voitures reçues:', voitures);
+        
+        const tbody = document.querySelector('#voituresTable tbody');
+        if (!tbody) {
+            throw new Error('Élément tbody non trouvé dans le DOM');
+        }
+        tbody.innerHTML = '';
+        
+        if (!Array.isArray(voitures)) {
+            throw new Error('La réponse de l\'API n\'est pas un tableau');
+        }
+        
+        if (voitures.length === 0) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = '<td colspan="10" class="text-center">Aucune voiture trouvée</td>';
+            tbody.appendChild(tr);
+            return;
+        }
+        
+        voitures.forEach(v => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${v._id || ''}</strong></td>
+                <td>${v.marque || ''}</td>
+                <td>${v.modele || ''}</td>
+                <td>${v.annee || ''}</td>
+                <td><span class="badge bg-info">${v.carburant || ''}</span></td>
+                <td>${v.kilometrage ? v.kilometrage.toLocaleString() : ''}</td>
+                <td>
+                    <span class="badge ${getEtatBadgeClass(v.etat)}">${getEtatText(v.etat)}</span>
+                </td>
+                <td><strong>${v.tarifJournalier ? v.tarifJournalier.toFixed(2) + ' dt' : ''}</strong></td>
+                <td>${v.createdAt ? new Date(v.createdAt).toLocaleDateString() : ''}</td>
+                <td>
+                    <button class="btn btn-sm btn-warning" data-id="${v._id}" data-action="edit">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger ms-1" data-id="${v._id}" data-action="delete">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+        
+        // Charger les options des voitures pour les entretiens
+        await loadVoituresOptions();
+    } catch (err) {
+        console.error('Erreur chargement voitures:', err);
+        showAlert('danger', `Erreur lors du chargement des voitures: ${err.message}`);
+    }
+}
+
+// Fonction pour charger les options des voitures dans le select d'entretien
+async function loadVoituresOptions() {
+    try {
+        console.log('Chargement des options de voitures...');
+        const response = await fetch(API_VOITURES);
+        if (!response.ok) {
+            throw new Error(`Erreur HTTP! statut: ${response.status}`);
+        }
+        const voitures = await response.json();
+        
+        // Mettre à jour le select du formulaire d'ajout d'entretien
+        const selectEntretien = document.getElementById('car');
+        
+        if (selectEntretien) {
+            // Sauvegarder la sélection actuelle
+            const selectedValue = selectEntretien.value;
+            
+            // Vider et réinitialiser les options
+            selectEntretien.innerHTML = '<option value="">Sélectionnez une voiture</option>';
+            
+            if (Array.isArray(voitures)) {
+                // Trier les voitures par matricule
+                voitures.sort((a, b) => a.matricule.localeCompare(b.matricule));
+                
+                // Ajouter les options des voitures
+                voitures.forEach(voiture => {
+                    if (voiture && voiture._id && voiture.matricule) {
+                        const option = document.createElement('option');
+                        option.value = voiture._id;
+                        option.textContent = `${voiture.marque || ''} ${voiture.modele || ''} (${voiture.matricule})`.trim();
+                        selectEntretien.appendChild(option);
+                    }
+                });
+                
+                // Restaurer la sélection si elle existe toujours
+                if (selectedValue) {
+                    selectEntretien.value = selectedValue;
+                }
+            } else {
+                console.error('Les données reçues ne sont pas un tableau:', voitures);
+            }
+        }
+        
+        console.log('Options de voitures chargées avec succès');
+    } catch (error) {
+        console.error('Erreur lors du chargement des options de voitures:', error);
+        showAlert('danger', 'Erreur lors du chargement des voitures');
+    }
+}
+
+// Charger les voitures dans le select d'entretien
+async function loadVoituresOptionsEntretien() {
+    try {
+        console.log('Chargement des options de voitures pour les entretiens...');
+        const response = await fetch(API_VOITURES);
+        
+        if (!response.ok) {
+            throw new Error(`Erreur HTTP! statut: ${response.status}`);
+        }
+        
+        const voitures = await response.json();
+        
+        // IMPORTANT: Vérifiez que vous utilisez les BONS IDs
+        // Pour le formulaire d'ajout d'entretien
+        const selectEntretien = document.getElementById('entretienMatr');
+        // Pour le filtre d'entretien
+        const selectFilter = document.getElementById('filterEntretienMatr');
+        
+        if (selectEntretien && selectFilter) {
+            // Sauvegarder les sélections actuelles
+            const selectedValue = selectEntretien.value;
+            const filterSelectedValue = selectFilter.value;
+            
+            // Réinitialiser les options
+            selectEntretien.innerHTML = '<option value="">Sélectionnez une voiture...</option>';
+            selectFilter.innerHTML = '<option value="">-- Toutes --</option>';
+            
+            // Vérifier et traiter les voitures
+            if (Array.isArray(voitures) && voitures.length > 0) {
+                // Trier par immatriculation
+                const voituresTriees = [...voitures].sort((a, b) => {
+                    const immatA = a._id || a.matricule || '';
+                    const immatB = b._id || b.matricule || '';
+                    return immatA.localeCompare(immatB);
+                });
+                
+                // Ajouter les options
+                voituresTriees.forEach(voiture => {
+                    if (voiture && voiture._id) {
+                        const immat = voiture._id;
+                        const marque = voiture.marque || '';
+                        const modele = voiture.modele || '';
+                        const label = `${immat} - ${marque} ${modele}`.trim();
+                        
+                        // Pour le formulaire
+                        const optionEntretien = document.createElement('option');
+                        optionEntretien.value = voiture._id;
+                        optionEntretien.textContent = label;
+                        selectEntretien.appendChild(optionEntretien);
+                        
+                        // Pour le filtre
+                        const optionFilter = document.createElement('option');
+                        optionFilter.value = voiture._id;
+                        optionFilter.textContent = label;
+                        selectFilter.appendChild(optionFilter);
+                    }
+                });
+                
+                // Restaurer les sélections
+                if (selectedValue) selectEntretien.value = selectedValue;
+                if (filterSelectedValue) selectFilter.value = filterSelectedValue;
+                
+                console.log('Options chargées:', voituresTriees.length, 'voitures');
+            }
+        } else {
+            console.error('Selects non trouvés!');
+            console.log('entretienMatr:', selectEntretien);
+            console.log('filterEntretienMatr:', selectFilter);
+        }
+        
+    } catch (error) {
+        console.error('Erreur lors du chargement des options de voitures:', error);
+        showAlert('danger', 'Erreur lors du chargement des voitures');
+    }
+}
+
+// ==================== GESTION DU FORMULAIRE DE VOITURE ====================
+
+// Gestion du formulaire de voiture
+const voitureForm = document.getElementById('voitureForm');
+if (voitureForm) {
+    voitureForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const form = e.target;
+        const isEditing = form.dataset.editing === 'true';
+        const submitBtn = form.querySelector('button[type="submit"]');
+        
+        try {
+            // Désactiver le bouton pendant le traitement
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Traitement...';
+            
+            // Récupérer les valeurs du formulaire
+            const voitureData = {
+                _id: document.getElementById('matr').value.trim(),
+                marque: document.getElementById('marque').value.trim(),
+                modele: document.getElementById('modele').value.trim(),
+                annee: document.getElementById('annee').value ? parseInt(document.getElementById('annee').value) : null,
+                carburant: document.getElementById('carburant').value,
+                kilometrage: document.getElementById('kilometrage').value ? parseInt(document.getElementById('kilometrage').value) : 0,
+                etat: document.getElementById('etat').value,
+                tarifJournalier: document.getElementById('tarifJournalier').value ? parseFloat(document.getElementById('tarifJournalier').value) : 0
+            };
+            
+            console.log('Données du formulaire:', voitureData);
+
+            // Validation des champs obligatoires
+            if (!voitureData._id || !voitureData.marque || !voitureData.modele) {
+                throw new Error('Les champs immatriculation, marque et modèle sont obligatoires');
+            }
+
+            const url = isEditing 
+                ? `${API_VOITURES}/${submitBtn.dataset.editingId}`
+                : API_VOITURES;
+                
+            const method = isEditing ? 'PUT' : 'POST';
+            
+            console.log(`Envoi de la requête ${method} à ${url}`, voitureData);
+
+            const res = await fetch(url, {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(voitureData)
+            });
+            
+            const responseData = await res.json().catch(() => ({}));
+            
+            if (!res.ok) {
+                console.error('Erreur API:', responseData);
+                throw new Error(
+                    responseData.message || 
+                    `Erreur ${res.status}: ${res.statusText}` || 
+                    'Une erreur est survenue lors de la communication avec le serveur'
+                );
+            }
+            
+            console.log('Réponse du serveur:', responseData);
+            
+            showAlert('success', `Voiture ${isEditing ? 'mise à jour' : 'créée'} avec succès !`);
+            
+            // Réinitialiser le formulaire
+            form.reset();
+            form.dataset.editing = 'false';
+            delete submitBtn.dataset.editingId;
+            submitBtn.innerHTML = '<i class="bi bi-save"></i> Enregistrer la voiture';
+            submitBtn.classList.remove('btn-warning');
+            submitBtn.classList.add('btn-primary');
+            
+            // Recharger la liste des voitures
+            await loadVoitures();
+            
+        } catch (err) {
+            console.error('Erreur lors de la soumission du formulaire:', err);
+            const errorMessage = err.message.includes('Failed to fetch') 
+                ? 'Impossible de se connecter au serveur. Veuillez vérifier votre connexion.'
+                : err.message;
+                
+            showAlert('danger', errorMessage);
+            
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = isEditing 
+                    ? '<i class="bi bi-save"></i> Mettre à jour'
+                    : '<i class="bi bi-save"></i> Enregistrer la voiture';
+            }
+        }
+    });
+}
+
+// Gestion des actions (éditer/supprimer)
+document.addEventListener('click', async (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    
+    const action = btn.getAttribute('data-action');
+    const id = btn.getAttribute('data-id');
+    
+    if (action === 'delete-voiture') {
+        if (!confirm(`Supprimer la voiture ${id} ? Cette action est irréversible.`)) return;
+        
+        try {
+            const res = await fetch(`${API_VOITURES}/${id}`, {
+                method: 'DELETE'
+            });
+            
+            if (!res.ok) throw new Error('Suppression échouée');
+            
+            showAlert('success', 'Voiture supprimée avec succès!');
+            await loadVoitures();
+        } catch (err) {
+            console.error('Erreur suppression:', err);
+            showAlert('danger', 'Erreur lors de la suppression');
+        }
+    } else if (action === 'edit') {
+        // Récupérer les données de la voiture
+        try {
+            const res = await fetch(`${API_VOITURES}/${id}`);
+            if (!res.ok) throw new Error('Impossible de récupérer les données');
+            
+            const voiture = await res.json();
+            
+            // Remplir le formulaire avec les données
+            document.getElementById('matr').value = voiture._id || '';
+            document.getElementById('marque').value = voiture.marque || '';
+            document.getElementById('modele').value = voiture.modele || '';
+            document.getElementById('annee').value = voiture.annee || '';
+            document.getElementById('carburant').value = voiture.carburant || 'essence';
+            document.getElementById('kilometrage').value = voiture.kilometrage || '';
+            document.getElementById('etat').value = voiture.etat || 'available';
+            document.getElementById('tarifJournalier').value = voiture.tarifJournalier || '';
+            
+            // Changer le texte du bouton
+            const submitBtn = document.querySelector('#voitureForm button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.innerHTML = '<i class="bi bi-save"></i> Mettre à jour';
+                submitBtn.classList.remove('btn-primary');
+                submitBtn.classList.add('btn-warning');
+            }
+            
+            // Faire défiler jusqu'au formulaire
+            document.getElementById('voitureForm').scrollIntoView({ behavior: 'smooth' });
+            
+        } catch (err) {
+            console.error('Erreur chargement voiture:', err);
+            showAlert('danger', 'Erreur lors du chargement des données de la voiture');
+        }
+    } else if (action === 'edit-entretien' && id) {
+        try {
+            console.log(`Chargement de l'entretien ${id}...`);
+            const response = await fetch(`${ENT_BASE}/${id}`);
+            if (!response.ok) {
+                throw new Error('Erreur lors du chargement des données');
+            }
+            const entretien = await response.json();
+            console.log('Données de l\'entretien chargées:', entretien);
+            loadEntretienInForm(entretien);
+        } catch (err) {
+            console.error('Erreur lors du chargement de l\'entretien:', err);
+            showAlert('danger', 'Erreur lors du chargement des données de l\'entretien: ' + err.message);
+        }
+    }
+});
+
+// Filtrer les voitures
+document.getElementById('applyFiltersBtn').addEventListener('click', async () => {
+    const marque = document.getElementById('filterMarque').value;
+    const carburant = document.getElementById('filterCarburant').value;
+    const etat = document.getElementById('filterEtat').value;
+    const minAnnee = document.getElementById('filterMinAnnee').value;
+    const maxAnnee = document.getElementById('filterMaxAnnee').value;
+    
+    let url = `${API_VOITURES}/search?`;
+    const params = [];
+    if (marque) params.push(`marque=${encodeURIComponent(marque)}`);
+    if (carburant) params.push(`carburant=${encodeURIComponent(carburant)}`);
+    if (etat) params.push(`etat=${encodeURIComponent(etat)}`);
+    if (minAnnee) params.push(`minAnnee=${encodeURIComponent(minAnnee)}`);
+    if (maxAnnee) params.push(`maxAnnee=${encodeURIComponent(maxAnnee)}`);
+    
+    url += params.join('&');
+    
+    try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('Erreur filtrage');
+        const voitures = await res.json();
+        
+        const tbody = document.querySelector('#voituresTable tbody');
+        tbody.innerHTML = '';
+        
+        voitures.forEach(v => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${v._id || ''}</strong></td>
+                <td>${v.marque || ''}</td>
+                <td>${v.modele || ''}</td>
+                <td>${v.annee || ''}</td>
+                <td><span class="badge bg-info">${v.carburant || ''}</span></td>
+                <td>${v.kilometrage ? v.kilometrage.toLocaleString() : ''}</td>
+                <td>
+                    <span class="badge ${getEtatBadgeClass(v.etat)}">${getEtatText(v.etat)}</span>
+                </td>
+                <td><strong>${v.tarifJournalier ? v.tarifJournalier.toFixed(2) + ' dt' : ''}</strong></td>
+                <td>${v.createdAt ? new Date(v.createdAt).toLocaleDateString() : ''}</td>
+                <td>
+                    <button class="btn btn-sm btn-warning" data-id="${v._id}" data-action="edit">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger ms-1" data-id="${v._id}" data-action="delete">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (err) {
+        console.error('Erreur filtrage:', err);
+        showAlert('danger', 'Erreur lors du filtrage');
+    }
+});
+
+// Tri des voitures (client)
+document.getElementById('applySortBtn').addEventListener('click', () => {
+    const param = document.getElementById('sortParam').value; // tarifJournalier | kilometrage | annee
+    const order = document.getElementById('sortOrder').value; // asc | desc
+    const colMap = { tarifJournalier: 7, kilometrage: 5, annee: 3 };
+    const col = colMap[param] || 7;
+    const factor = order === 'asc' ? 1 : -1;
+    const tbody = document.querySelector('#voituresTable tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    
+    const parseNumber = (text) => {
+        if (!text) return NaN;
+        const cleaned = text.replace(/[^0-9.,-]/g, '').replace(/,/g, '');
+        return parseFloat(cleaned);
+    };
+    
+    rows.sort((r1, r2) => {
+        const t1 = r1.children[col]?.textContent || '';
+        const t2 = r2.children[col]?.textContent || '';
+        const n1 = parseNumber(t1);
+        const n2 = parseNumber(t2);
+        const v1 = isNaN(n1) ? Number.NEGATIVE_INFINITY : n1;
+        const v2 = isNaN(n2) ? Number.NEGATIVE_INFINITY : n2;
+        if (v1 < v2) return -1 * factor;
+        if (v1 > v2) return 1 * factor;
+        return 0;
+    });
+    rows.forEach(r => tbody.appendChild(r));
+});
+
+// Charger les statistiques voitures
+async function loadStatsVoitures() {
+    try {
+        const res = await fetch(`${API_VOITURES}/stats`);
+        if (!res.ok) throw new Error('Erreur stats');
+        const stats = await res.json();
+        
+        // Totaux
+        document.getElementById('statTotalVoitures').textContent = 
+            stats.totals?.[0]?.total || '0';
+        
+        // Calculer les états
+        const disponibles = stats.countByEtat?.find(e => e._id === 'available')?.count || 0;
+        const maintenance = stats.countByEtat?.find(e => e._id === 'maintenance')?.count || 0;
+        document.getElementById('statDisponibles').textContent = disponibles;
+        document.getElementById('statMaintenance').textContent = maintenance;
+        
+        // Tarif moyen
+        const tarifMoyen = stats.pricing?.[0]?.avgTarif;
+        document.getElementById('statTarifMoyen').textContent = 
+            tarifMoyen ? tarifMoyen.toFixed(2) + ' dt' : '-';
+        
+        // Répartition carburant
+        const carburantList = document.getElementById('statsCarburant');
+        carburantList.innerHTML = '';
+        if (stats.countByCarburant) {
+            stats.countByCarburant.forEach(c => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item d-flex justify-content-between';
+                li.innerHTML = `<span>${c._id || 'Non spécifié'}</span><span class="badge bg-primary">${c.count}</span>`;
+                carburantList.appendChild(li);
+            });
+        }
+        
+        // Répartition état
+        const etatList = document.getElementById('statsEtat');
+        etatList.innerHTML = '';
+        if (stats.countByEtat) {
+            stats.countByEtat.forEach(e => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item d-flex justify-content-between';
+                const badgeClass = getEtatBadgeClass(e._id);
+                li.innerHTML = `<span>${getEtatText(e._id)}</span><span class="badge ${badgeClass}">${e.count}</span>`;
+                etatList.appendChild(li);
+            });
+        }
+    } catch (err) {
+        console.error('Erreur stats voitures:', err);
+    }
+}
+
+// ==================== ENTRETIENS ====================
+
+// ==================== ENTRETIENS ====================
+
+// Fonction pour charger les entretiens
+// Fonction pour charger les entretiens (VERSION CORRIGÉE)
+async function loadEntretiens(filters = {}) {
+    try {
+        console.log('🔍 Chargement des entretiens avec filtres:', filters);
+        
+        // Construire l'URL de recherche
+        const params = new URLSearchParams();
+        
+        // IMPORTANT: Utiliser les noms de paramètres que le backend attend
+        if (filters.carId) params.append('car', filters.carId);
+        if (filters.type) params.append('type', filters.type);
+        if (filters.minCout) params.append('minCout', filters.minCout);
+        if (filters.maxCout) params.append('maxCout', filters.maxCout);
+        
+        // Toujours utiliser la route /search
+        const url = `${ENT_BASE}/search?${params.toString()}`;
+        console.log('📡 URL de requête:', url);
+        
+        const res = await fetch(url);
+        if (!res.ok) {
+            const errorText = await res.text();
+            throw new Error(`Erreur HTTP ${res.status}: ${errorText}`);
+        }
+        
+        const entretiens = await res.json();
+        console.log(`✅ ${entretiens.length} entretiens reçus`);
+        
+        // Afficher les entretiens
+        displayEntretiens(entretiens);
+        
+    } catch (err) {
+        console.error('❌ Erreur chargement entretiens:', err);
+        showAlert('danger', `Erreur lors du chargement des entretiens: ${err.message}`);
+    }
+}
+
+// Fonction pour afficher les entretiens dans le tableau
+function displayEntretiens(entretiens) {
+    const tbody = document.querySelector('#entretiensTable tbody');
+    if (!tbody) {
+        console.error('Tableau entretiens non trouvé');
+        return;
+    }
+    
+    tbody.innerHTML = '';
+    
+    if (!Array.isArray(entretiens) || entretiens.length === 0) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td colspan="8" class="text-center text-muted">Aucun entretien trouvé</td>';
+        tbody.appendChild(tr);
+        return;
+    }
+    
+    // Trier par date (plus récent d'abord)
+    entretiens.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+    
+    entretiens.forEach(e => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${e.car?._id || e.car || 'N/A'}</td>
+            <td><span class="badge ${getTypeBadgeClass(e.type)}">${getTypeText(e.type)}</span></td>
+            <td>${e.date ? new Date(e.date).toLocaleDateString() : 'Non spécifiée'}</td>
+            <td>${e.description || '—'}</td>
+            <td><strong>${e.cout ? e.cout.toFixed(2) + ' dt' : '0.00 dt'}</strong></td>
+            <td>${e.piecesReconditionneesPct || e.piecesReconditionnees || 0}%</td>
+            <td>${e.dechetsKg || e.dechets || 0} kg</td>
+            <td class="text-nowrap">
+                <button class="btn btn-sm btn-primary me-1" 
+                        data-id="${e._id || ''}" 
+                        data-action="edit-entretien"
+                        title="Modifier cet entretien">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-sm btn-danger" 
+                        data-id="${e._id || ''}" 
+                        data-action="delete-entretien"
+                        title="Supprimer cet entretien">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+// Charger les données d'un entretien dans le formulaire
+function loadEntretienInForm(entretien) {
+    if (!entretien) return;
+    
+    // Mettre à jour le titre du formulaire
+    const formTitle = document.getElementById('entretienFormTitle');
+    if (formTitle) {
+        formTitle.textContent = 'Modifier un entretien';
+    }
+    
+    // Remplir les champs du formulaire
+    if (entretien.car) {
+        document.getElementById('entretienMatr').value = entretien.car._id || entretien.car;
+    }
+    if (entretien.type) {
+        document.getElementById('entretienType').value = entretien.type;
+    }
+    if (entretien.date) {
+        // Formater la date au format YYYY-MM-DD pour l'input date
+        const date = new Date(entretien.date);
+        const formattedDate = date.toISOString().split('T')[0];
+        document.getElementById('entretienDate').value = formattedDate;
+    }
+    document.getElementById('entretienDescription').value = entretien.description || '';
+    document.getElementById('entretienCout').value = entretien.cout || '';
+    document.getElementById('entretienPieces').value = entretien.piecesReconditionnees || entretien.piecesReconditionneesPct || '0';
+    document.getElementById('entretienDechets').value = entretien.dechets || entretien.dechetsKg || '0';
+    
+    // Ajouter un champ caché pour l'ID de l'entretien en cours de modification
+    let idInput = document.getElementById('entretienId');
+    if (!idInput) {
+        idInput = document.createElement('input');
+        idInput.type = 'hidden';
+        idInput.id = 'entretienId';
+        entretienForm.appendChild(idInput);
+    }
+    idInput.value = entretien._id || '';
+    
+    // Mettre à jour le bouton de soumission
+    const submitBtn = entretienForm.querySelector('button[type="submit"]');
+    if (submitBtn) {
+        submitBtn.innerHTML = '<i class="bi bi-save"></i> Mettre à jour';
+        submitBtn.classList.remove('btn-primary');
+        submitBtn.classList.add('btn-warning');
+    }
+    
+    // Afficher le bouton d'annulation
+    const cancelBtn = document.getElementById('cancelEditBtn');
+    if (cancelBtn) {
+        cancelBtn.classList.remove('d-none');
+    }
+    
+    // Faire défiler jusqu'au formulaire
+    entretienForm.scrollIntoView({ behavior: 'smooth' });
+}
+
+// Réinitialiser le formulaire d'entretien
+function resetEntretienForm() {
+    const form = document.getElementById('entretienForm');
+    if (form) {
+        form.reset();
+        
+        // Supprimer le champ caché d'ID
+        const idInput = document.getElementById('entretienId');
+        if (idInput) idInput.remove();
+        
+        // Réinitialiser le bouton de soumission
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.innerHTML = '<i class="bi bi-wrench"></i> Enregistrer l\'entretien';
+            submitBtn.classList.remove('btn-warning');
+            submitBtn.classList.add('btn-dark');
+        }
+        
+        // Cacher le bouton d'annulation
+        const cancelBtn = document.getElementById('cancelEditBtn');
+        if (cancelBtn) {
+            cancelBtn.classList.add('d-none');
+        }
+        
+        // Mettre à jour le titre du formulaire
+        const formTitle = document.getElementById('entretienFormTitle');
+        if (formTitle) {
+            formTitle.textContent = 'Ajouter un entretien';
+        }
+    }
+}
+
+// Gestionnaire pour le bouton d'annulation
+document.addEventListener('click', (e) => {
+    if (e.target && e.target.id === 'cancelEditBtn') {
+        resetEntretienForm();
+    }
+});
+
+// Gestionnaire du formulaire d'entretien
+function setupEntretienForm() {
+    const entretienForm = document.getElementById('entretienForm');
+    
+    if (!entretienForm) {
+        console.error('ERREUR: Formulaire entretien non trouvé! Vérifiez id="entretienForm"');
+        return;
+    }
+    
+    console.log('Configuration du formulaire entretien...');
+    
+    // Supprimer les anciens listeners
+    const newForm = entretienForm.cloneNode(true);
+    entretienForm.parentNode.replaceChild(newForm, entretienForm);
+    
+    // Nouveau listener
+    document.getElementById('entretienForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const form = e.target;
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const isEditMode = document.getElementById('entretienId')?.value;
+        
+        try {
+            // Désactiver le bouton pendant la soumission
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> ' + 
+                                (isEditMode ? 'Mise à jour...' : 'Enregistrement...');
+            
+            const entretienData = {
+                matr: form.entretienMatr.value,
+                type: form.entretienType.value,
+                date: form.entretienDate.value,
+                description: form.entretienDescription.value,
+                cout: parseFloat(form.entretienCout.value) || 0,
+                piecesReconditionnees: parseInt(form.entretienPieces.value) || 0,
+                dechets: parseFloat(form.entretienDechets.value) || 0
+            };
+            
+            // Déterminer l'URL et la méthode en fonction du mode (création ou édition)
+            const url = isEditMode ? `${ENT_BASE}/${document.getElementById('entretienId').value}` : ENT_BASE;
+            const method = isEditMode ? 'PUT' : 'POST';
+            
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(entretienData)
+            });
+            
+            
+            let responseData;
+            try {
+                responseData = await response.json();
+            } catch (jsonError) {
+                console.error('Erreur parsing JSON:', jsonError);
+                const text = await response.text();
+                console.error('Réponse texte:', text);
+                throw new Error(`Erreur serveur: ${response.status} - ${text}`);
+            }
+            
+            if (!response.ok) {
+                throw new Error(responseData.message || `Erreur ${response.status}`);
+            }
+            
+            console.log('✅ Entretien créé:', responseData);
+            showAlert('success', 'Entretien enregistré avec succès !');
+            
+            // Réinitialiser le formulaire
+            resetEntretienForm();
+            
+            // Recharger les données
+            await Promise.all([
+                loadEntretiens(),
+                loadStatsEntretiens()
+            ]);
+            
+            // Recharger les options des voitures si nécessaire
+            if (!document.getElementById('entretienMatr').options.length) {
+                await loadVoituresOptionsEntretien();
+            }
+            
+        } catch (error) {
+            console.error('❌ Erreur détaillée:', error);
+            console.error('Stack trace:', error.stack);
+            showAlert('danger', `Erreur: ${error.message}`);
+        } finally {
+            // Réactiver le bouton
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }
+    });
+    
+    console.log('✅ Formulaire entretien configuré');
+}
+
+// Supprimer un entretien
+function setupEntretienDelete() {
+    const tbody = document.querySelector('#entretiensTable tbody');
+    if (!tbody) return;
+    
+    // Supprimer les anciens listeners
+    const newTbody = tbody.cloneNode(true);
+    tbody.parentNode.replaceChild(newTbody, tbody);
+    
+    // Nouveau listener
+    document.querySelector('#entretiensTable tbody').addEventListener('click', async (e) => {
+        const btn = e.target.closest('button');
+        if (!btn) return;
+        
+        if (btn.dataset.action === 'delete-entretien') {
+            const id = btn.dataset.id;
+            if (!confirm('Supprimer cet entretien ?')) return;
+            
+            try {
+                const res = await fetch(`${ENT_BASE}/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (!res.ok) throw new Error('Suppression échouée');
+                
+                showAlert('success', 'Entretien supprimé!');
+                await loadEntretiens();
+                await loadStatsEntretiens();
+            } catch (err) {
+                console.error('Erreur suppression entretien:', err);
+                showAlert('danger', 'Erreur lors de la suppression');
+            }
+        }
+    });
+}
+
+// Filtrer les entretiens
+function setupEntretienFilters() {
+    const filterBtn = document.getElementById('applyEntretienFiltersBtn');
+    if (!filterBtn) {
+        console.error('Bouton de filtre des entretiens non trouvé');
+        return;
+    }
+    
+    // Supprimer ancien listener
+    const newBtn = filterBtn.cloneNode(true);
+    filterBtn.parentNode.replaceChild(newBtn, filterBtn);
+    
+    // Nouveau listener
+    newBtn.addEventListener('click', async () => {
+        const filters = {};
+        
+        // Récupérer les valeurs des champs de filtre
+        const carId = document.getElementById('filterEntretienMatr').value;
+        const type = document.getElementById('filterEntretienType').value;
+        const minCout = document.getElementById('filterEntretienMinCout').value;
+        const maxCout = document.getElementById('filterEntretienMaxCout').value;
+        
+        // Ajouter uniquement les filtres non vides
+        if (carId) filters.carId = carId;
+        if (type) filters.type = type;
+        
+        // Valider et ajouter les filtres numériques
+        if (minCout) {
+            if (isNaN(parseFloat(minCout))) {
+                showAlert('warning', 'Le coût minimum doit être un nombre valide');
+                return;
+            }
+            filters.minCout = minCout;
+        }
+        
+        if (maxCout) {
+            if (isNaN(parseFloat(maxCout))) {
+                showAlert('warning', 'Le coût maximum doit être un nombre valide');
+                return;
+            }
+            filters.maxCout = maxCout;
+        }
+        
+        console.log('Filtres entretiens appliqués:', filters);
+        
+        try {
+            await loadEntretiens(filters);
+        } catch (err) {
+            console.error('Erreur lors du filtrage des entretiens:', err);
+            showAlert('danger', 'Erreur lors du filtrage des entretiens: ' + (err.message || 'Erreur inconnue'));
+        }
+    });
+    
+    // Activer le bouton de filtre
+    newBtn.disabled = false;
+}
+
+// Charger les statistiques entretiens
+async function loadStatsEntretiens() {
+    try {
+        const res = await fetch(`${ENT_BASE}/stats`);
+        if (!res.ok) throw new Error('Erreur stats entretiens');
+        const stats = await res.json();
+        
+        const coutTotal = stats.costSummary?.[0]?.totalCout || 0;
+        const coutMoyen = stats.costSummary?.[0]?.avgCout || 0;
+        const totalEntretiens = stats.totals?.[0]?.total || 0;
+        
+        document.getElementById('statCoutTotal').textContent = coutTotal.toFixed(2) + ' dt';
+        document.getElementById('statCoutMoyen').textContent = coutMoyen.toFixed(2) + ' dt';
+        document.getElementById('statTotalEntretiens').textContent = totalEntretiens;
+    } catch (err) {
+        console.error('Erreur stats entretiens:', err);
+    }
+}
+
+// Maintenance prédictive
+function setupPredictiveMaintenance() {
+    const predictBtn = document.getElementById('predictBtn');
+    if (!predictBtn) return;
+    
+    const newBtn = predictBtn.cloneNode(true);
+    predictBtn.parentNode.replaceChild(newBtn, predictBtn);
+    
+    document.getElementById('predictBtn').addEventListener('click', async () => {
+        try {
+            const submitBtn = document.getElementById('predictBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Calcul...';
+            
+            const res = await fetch(`${ENT_BASE}/predict`);
+            if (!res.ok) throw new Error('Erreur prédiction');
+            const prediction = await res.json();
+            
+            document.getElementById('predict15jours').textContent = 
+                prediction.resume?.a_venir_15_jours || '0';
+            document.getElementById('predictAlertes').textContent = 
+                prediction.alertes_prioritaires?.length || '0';
+            document.getElementById('predictCout30j').textContent = 
+                prediction.resume?.cout_estime_30_jours?.toFixed(2) || '0';
+            
+            const detailsDiv = document.getElementById('predictDetails');
+            detailsDiv.style.display = 'block';
+            
+            let detailsHTML = `
+                <h6>Détails de la maintenance prédictive</h6>
+                <div class="alert alert-info">
+                    <strong>Résumé:</strong> ${prediction.resume?.vehicules_total || 0} voitures, 
+                    ${prediction.resume?.entretiens_total || 0} entretiens historiques
+                </div>
+            `;
+            
+            if (prediction.vehicules_a_maintenir_15j?.length > 0) {
+                detailsHTML += `
+                    <h6>Voitures à maintenir dans 15 jours:</h6>
+                    <ul class="list-group">
+                `;
+                prediction.vehicules_a_maintenir_15j.forEach(v => {
+                    detailsHTML += `
+                        <li class="list-group-item">
+                            ${v.id} - ${v.marque} ${v.modele} 
+                            <span class="badge bg-warning">${v.urgence_maintenance_jours} jours</span>
+                            <span class="badge bg-secondary">Coût estimé: ${v.cout_estime} dt</span>
+                        </li>
+                    `;
+                });
+                detailsHTML += `</ul>`;
+            }
+            
+            if (prediction.alertes_prioritaires?.length > 0) {
+                detailsHTML += `
+                    <h6 class="mt-3">Alertes prioritaires:</h6>
+                    <div class="alert alert-warning">
+                        <ul>
+                `;
+                prediction.alertes_prioritaires.forEach(alerte => {
+                    detailsHTML += `<li>${alerte}</li>`;
+                });
+                detailsHTML += `
+                        </ul>
+                    </div>
+                `;
+            }
+            
+            document.getElementById('predictDetails').innerHTML = detailsHTML;
+        } catch (err) {
+            console.error('Erreur prédiction maintenance:', err);
+            showAlert('danger', 'Erreur lors de la prédiction de maintenance');
+        } finally {
+            const submitBtn = document.getElementById('predictBtn');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="bi bi-calculator"></i> Calculer la maintenance prédictive';
+        }
+    });
+}
+
+// ==================== BOUTONS RAFRAÎCHISSEMENT ENTRETIENS ====================
+
+document.getElementById('refreshEntretiensBtn').addEventListener('click', async () => {
+    console.log('🔄 Rafraîchissement entretiens...');
+    await loadEntretiens();
+    await loadStatsEntretiens();
+    await loadVoituresOptionsEntretien();
+});
+
+document.getElementById('refreshStatsEntretiensBtn').addEventListener('click', async () => {
+    console.log('📊 Rafraîchissement stats entretiens...');
+    await loadStatsEntretiens();
+});
+
+// ==================== INITIALISATION ENTRETIENS ====================
+
+function initEntretiens() {
+    console.log('🔄 Initialisation section entretiens...');
+    
+    try {
+        // 1. Configurer le formulaire d'entretien
+        console.log('📝 Configuration formulaire...');
+        setupEntretienForm();
+        
+        // 2. Configurer la suppression
+        console.log('🗑️ Configuration suppression...');
+        setupEntretienDelete();
+        
+        // 3. Configurer les filtres
+        console.log('🔍 Configuration filtres...');
+        setupEntretienFilters();
+        
+        // 4. Configurer la maintenance prédictive
+        console.log('🔮 Configuration maintenance prédictive...');
+        setupPredictiveMaintenance();
+        
+        // 5. Définir la date du jour par défaut
+        const today = new Date().toISOString().split('T')[0];
+        const dateInput = document.getElementById('entretienDate');
+        if (dateInput) {
+            dateInput.value = today;
+            console.log('📅 Date définie:', today);
+        }
+        
+        console.log('✅ Section entretiens initialisée');
+        
+    } catch (error) {
+        console.error('❌ Erreur initialisation entretiens:', error);
+        showAlert('danger', 'Erreur initialisation entretiens: ' + error.message);
+    }
+}
+
+// ==================== INITIALISATION GLOBALE ====================
+
+// Boutons de rafraîchissement
+document.getElementById('refreshVoituresBtn').addEventListener('click', () => {
+    loadVoitures();
+    loadStatsVoitures();
+});
+
+document.getElementById('refreshEntretiensBtn').addEventListener('click', () => {
+    loadEntretiens();
+    loadStatsEntretiens();
+});
+
+document.getElementById('refreshStatsVoituresBtn').addEventListener('click', loadStatsVoitures);
+document.getElementById('refreshStatsEntretiensBtn').addEventListener('click', loadStatsEntretiens);
+
+// Chargement initial
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log('🚀 Démarrage application...');
+    
+    // 1. Charger les voitures
+    await loadVoitures();
+    
+    // 2. Charger les options de voitures pour entretiens
+    await loadVoituresOptionsEntretien();
+    
+    // 3. Initialiser la section entretiens (CRITIQUE!)
+    initEntretiens();
+    
+    // 4. Charger les entretiens existants
+    await loadEntretiens();
+    
+    // 5. Charger les statistiques
+    await loadStatsVoitures();
+    await loadStatsEntretiens();
+    
+    console.log('✅ Application prête');
+});
+</script>
+        
+        <!-- Bootstrap JS -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    </body>
 </html>

@@ -279,30 +279,69 @@ async function getEntretiensByCar(req, res) {
 async function searchEntretiens(req, res) {
   try {
     const q = {};
-    if (req.query.car) q.car = String(req.query.car).trim().toUpperCase();
-    if (req.query.type) q.type = String(req.query.type);
+    
+    // Filtre par ID de voiture (exact match)
+    if (req.query.car && req.query.car.trim() !== '') {
+      q.car = String(req.query.car).trim().toUpperCase();
+    }
+    
+    // Filtre par matricule de voiture (si vous voulez filtrer par immatriculation)
+    // Note: Cela nécessiterait une jointure ou une recherche différente
+    
+    // Filtre par type (avec validation optionnelle)
+    if (req.query.type && req.query.type.trim() !== '') {
+      const typeVal = String(req.query.type).trim();
+      // Optionnel: valider contre les types autorisés
+      const allowedTypes = ['routine', 'reparation', 'inspection', 'autre'];
+      if (allowedTypes.includes(typeVal)) {
+        q.type = typeVal;
+      }
+    }
+    
+    // Filtre par coût
     if (req.query.minCout || req.query.maxCout) {
       q.cout = {};
-      if (req.query.minCout) q.cout.$gte = Number(req.query.minCout);
-      if (req.query.maxCout) q.cout.$lte = Number(req.query.maxCout);
+      if (req.query.minCout && !isNaN(req.query.minCout)) {
+        q.cout.$gte = Number(req.query.minCout);
+      }
+      if (req.query.maxCout && !isNaN(req.query.maxCout)) {
+        q.cout.$lte = Number(req.query.maxCout);
+      }
     }
+    
+    // Filtre par date
     if (req.query.startDate || req.query.endDate) {
       q.date = {};
-      if (req.query.startDate) q.date.$gte = String(req.query.startDate);
-      if (req.query.endDate) q.date.$lte = String(req.query.endDate);
+      if (req.query.startDate && req.query.startDate.trim() !== '') {
+        q.date.$gte = String(req.query.startDate).trim();
+      }
+      if (req.query.endDate && req.query.endDate.trim() !== '') {
+        q.date.$lte = String(req.query.endDate).trim();
+      }
     }
-    if (req.query.q) {
-      const rx = new RegExp(String(req.query.q), 'i');
-      q.$or = [{ description: rx }, { type: rx }];
+    
+    // Filtre par texte (recherche dans description OU type)
+    if (req.query.q && req.query.q.trim() !== '') {
+      const rx = new RegExp(String(req.query.q).trim(), 'i');
+      // Utilisation de $and pour combiner avec d'autres filtres
+      q.$and = q.$and || [];
+      q.$and.push({
+        $or: [
+          { description: rx },
+          { type: rx }
+        ]
+      });
     }
+    
+    console.log('Search query:', q); // Pour le débogage
+    
     const data = await Entretien.find(q).populate('car');
     res.status(200).json(data);
   } catch (err) {
-    console.log(err);
-    res.status(500).json({ message: 'Server error' });
+    console.log('Search error:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
   }
 }
-
 // SORT entretiens by fields
 async function sortEntretiens(req, res) {
   try {
