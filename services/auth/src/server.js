@@ -42,10 +42,10 @@ app.use((err, req, res, next) => {
 
 // Start server
 const PORT = process.env.PORT || 3001;
-const DISCOVERY_URL = process.env.DISCOVERY_URL || 'http://localhost:3000';
+const DISCOVERY_URL = process.env.DISCOVERY_URL || 'http://discovery:3000';
 const SERVICE_NAME = 'auth-service';
-const SERVICE_HOST = process.env.SERVICE_HOST || 'localhost';
-const SERVICE_URL = process.env.SERVICE_URL || `http://${SERVICE_HOST}:${PORT}`;
+// In Docker, the hostname is the service name. We assume 'auth' is the service name in docker-compose.
+const SERVICE_URL = process.env.SERVICE_URL || `http://auth:${PORT}`;
 
 app.listen(PORT, async () => {
   console.log(`Server is running on port ${PORT}`);

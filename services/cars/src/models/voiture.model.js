@@ -3,13 +3,12 @@ const schema = mongoose.Schema;
 
 // définition du schéma Voiture (Car)
 const VoitureSchema = new schema({
-    matr: {
+    _id: {
       type: String,
       required: true,
-      unique: true,
       validate: {
         validator: function(v) { return typeof v === 'string' && v.length >= 1 && v.length <= 50; },
-        message: "Le matricule doit être une chaîne valide"
+        message: "L'ID doit être une chaîne valide"
       }
     },
     marque: {
@@ -94,8 +93,8 @@ function todayStr() {
 
 VoitureSchema.pre('save', async function(next) {
   try {
-    if (this.matr != null) {
-      this.matr = String(this.matr).trim().toUpperCase();
+    if (this._id != null) {
+      this._id = String(this._id).trim().toUpperCase();
     }
     const now = todayStr();
     if (this.isNew && !this.createdAt) this.createdAt = now;
@@ -109,8 +108,8 @@ VoitureSchema.pre('save', async function(next) {
 VoitureSchema.pre('findOneAndUpdate', function(next) {
   try {
     const u = this.getUpdate();
-    if (u && u.matr != null) {
-      u.matr = String(u.matr).trim().toUpperCase();
+    if (u && u._id != null) {
+      u._id = String(u._id).trim().toUpperCase();
       this.set(u);
     }
     this.set({ updatedAt: todayStr() });

@@ -3,8 +3,8 @@ const { createProxyMiddleware } = require('http-proxy-middleware');
 const axios = require('axios');
 
 const app = express();
-const PORT = process.env.PORT || 8081;
-const DISCOVERY_URL = process.env.DISCOVERY_URL || 'http://localhost:3000';
+const PORT = process.env.PORT || 8080;
+const DISCOVERY_URL = process.env.DISCOVERY_URL || 'http://discovery:3000';
 
 // Helper to get service URL from discovery
 async function getServiceUrl(serviceName) {
@@ -61,15 +61,10 @@ app.use('/entretiens', createServiceProxy('cars-service'));
 // Route payment-related endpoints to payment-service
 app.use('/payments', createServiceProxy('payment-service'));
 
-// Route reservation-related endpoints to reservation-service
-app.use('/reservations', createServiceProxy('reservation-service'));
-app.use('/contrats', createServiceProxy('reservation-service'));
-
 app.listen(PORT, () => {
   console.log(`Gateway running on port ${PORT}`);
   console.log('Routes configured:');
   console.log('  - /auth, /users, /profile, /activity, /login-history -> auth-service');
   console.log('  - /voitures, /entretiens -> cars-service');
   console.log('  - /payments -> payment-service');
-  console.log('  - /reservations, /contrats -> reservation-service');
 });
