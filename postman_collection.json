@@ -1,7 +1,7 @@
 ﻿{
   "info": {
     "name": "Car Rental Microservices API",
-    "description": "Complete API collection for car rental microservices: Auth, Cars, and Payment services with Express.js and MongoDB",
+    "description": "Complete API collection for car rental microservices: Auth, Cars, Payment, and Reservation services with Express.js and MongoDB",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "12345678"
   },
@@ -43,6 +43,16 @@
     },
     {
       "key": "paymentId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "reservationId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "contratId",
       "value": "",
       "type": "string"
     }
@@ -112,6 +122,22 @@
               "path": ["payment-service"]
             },
             "description": "Get details for payment-service from Discovery Service"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Reservation Service Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/reservation-service",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["reservation-service"]
+            },
+            "description": "Get details for reservation-service from Discovery Service"
           },
           "response": []
         },
@@ -2186,6 +2212,301 @@
         }
       ],
       "description": "Payment statistics and analytics endpoints"
+    },
+    {
+      "name": "Reservation Service - Reservations",
+      "item": [
+        {
+          "name": "Create Reservation",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set(\"reservationId\", jsonData._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"voiture\": \"{{voitureId}}\",\n  \"user\": \"{{userId}}\",\n  \"dateDebut\": \"2025-12-15\",\n  \"dateFin\": \"2025-12-20\",\n  \"paiement\": \"carte\",\n  \"montant\": 250,\n  \"lieuRetrait\": \"Tunis Centre\",\n  \"lieuRetour\": \"Tunis Centre\",\n  \"commentaires\": \"Réservation test\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reservation/add",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservation", "add"]
+            },
+            "description": "Create a new reservation"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Reservations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reservation/all",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservation", "all"]
+            },
+            "description": "Get all reservations with populated voiture and user"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Reservation by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reservation/{{reservationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservation", "{{reservationId}}"]
+            },
+            "description": "Get a specific reservation by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Reservations by User",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reservation/user/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservation", "user", "{{userId}}"]
+            },
+            "description": "Get all reservations for a specific user"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Reservations by Voiture",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reservation/voiture/{{voitureId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservation", "voiture", "{{voitureId}}"]
+            },
+            "description": "Get all reservations for a specific car"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Reservation",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dateDebut\": \"2025-12-16\",\n  \"dateFin\": \"2025-12-22\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reservation/update/{{reservationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservation", "update", "{{reservationId}}"]
+            },
+            "description": "Update a reservation"
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Reservation",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reservation/cancel/{{reservationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservation", "cancel", "{{reservationId}}"]
+            },
+            "description": "Cancel a reservation (soft delete - sets status to 'annulée')"
+          },
+          "response": []
+        },
+        {
+          "name": "Check Availability",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"voitureId\": \"{{voitureId}}\",\n  \"dateDebut\": \"2025-12-15\",\n  \"dateFin\": \"2025-12-20\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reservation/availability",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservation", "availability"]
+            },
+            "description": "Check if a car is available for a given date range"
+          },
+          "response": []
+        }
+      ],
+      "description": "Reservation management endpoints (Reservation Service)"
+    },
+    {
+      "name": "Reservation Service - Contrats",
+      "item": [
+        {
+          "name": "Create Contrat",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set(\"contratId\", jsonData.contrat._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reservation\": \"{{reservationId}}\",\n  \"numero\": \"CTR-2025-001\",\n  \"lieu\": \"Tunis\",\n  \"montantTotal\": 250,\n  \"conditions\": \"Le locataire s'engage à respecter les conditions générales de location. Le véhicule doit être restitué dans le même état qu'à la prise en charge.\",\n  \"signataire\": \"Client Name\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/contrat/add",
+              "host": ["{{baseUrl}}"],
+              "path": ["contrat", "add"]
+            },
+            "description": "Create a new contract (generates PDF and sends email)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Contrats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/contrat/all",
+              "host": ["{{baseUrl}}"],
+              "path": ["contrat", "all"]
+            },
+            "description": "Get all contracts"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Contrat by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/contrat/{{contratId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["contrat", "{{contratId}}"]
+            },
+            "description": "Get a specific contract by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Contrat by Numero",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/contrat/numero/CTR-2025-001",
+              "host": ["{{baseUrl}}"],
+              "path": ["contrat", "numero", "CTR-2025-001"]
+            },
+            "description": "Get a contract by its number"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Contrat",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"statut\": \"terminé\",\n  \"dateSignature\": \"2025-12-15T10:00:00.000Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/contrat/{{contratId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["contrat", "{{contratId}}"]
+            },
+            "description": "Update a contract"
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Contrat",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/contrat/{{contratId}}/cancel",
+              "host": ["{{baseUrl}}"],
+              "path": ["contrat", "{{contratId}}", "cancel"]
+            },
+            "description": "Cancel a contract"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Contract PDF File",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/files/CTR-filename.pdf",
+              "host": ["{{baseUrl}}"],
+              "path": ["files", "CTR-filename.pdf"]
+            },
+            "description": "Download a contract PDF file (replace filename with actual file)"
+          },
+          "response": []
+        }
+      ],
+      "description": "Contract (Contrat) management endpoints with PDF generation and email (Reservation Service). Note: Reservation service uses auth-service for users (via /users endpoints) and cars-service for cars (via /voitures endpoints)"
     }
   ]
 }

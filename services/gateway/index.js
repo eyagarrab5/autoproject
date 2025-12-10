@@ -61,10 +61,18 @@ app.use('/entretiens', createServiceProxy('cars-service'));
 // Route payment-related endpoints to payment-service
 app.use('/payments', createServiceProxy('payment-service'));
 
+// Route reservation-related endpoints to reservation-service
+// Note: reservation service uses auth-service for users and cars-service for voitures
+app.use('/reservation', createServiceProxy('reservation-service'));
+app.use('/contrat', createServiceProxy('reservation-service'));
+app.use('/files', createServiceProxy('reservation-service'));
+
 app.listen(PORT, () => {
   console.log(`Gateway running on port ${PORT}`);
   console.log('Routes configured:');
   console.log('  - /auth, /users, /profile, /activity, /login-history -> auth-service');
   console.log('  - /voitures, /entretiens -> cars-service');
   console.log('  - /payments -> payment-service');
+  console.log('  - /reservation, /contrat, /files -> reservation-service');
+  console.log('Note: reservation-service uses auth-service for users and cars-service for cars');
 });

@@ -39,6 +39,7 @@ services:
       - auth
       - cars
       - payment
+      - reservation
     networks:
       - app-network
 
@@ -58,6 +59,13 @@ services:
       - JWT_EXPIRE=7d
       - DISCOVERY_URL=http://discovery:3000
       - SERVICE_URL=http://auth:3001
+      # Email Configuration
+      - EMAIL_HOST=smtp.gmail.com
+      - EMAIL_PORT=587
+      - EMAIL_USER=jihedafli2017@gmail.com
+      - EMAIL_PASSWORD=dcqlydtcopmgkjyw
+      - EMAIL_FROM=jihedafli2017@gmail.com
+      - FRONTEND_URL=http://localhost:5173
     depends_on:
       - mongodb
       - discovery
@@ -110,10 +118,44 @@ services:
     networks:
       - app-network
 
+  # Reservation Service
+  reservation:
+    build:
+      context: ./services/reservation
+    container_name: reservation-service
+    restart: unless-stopped
+    ports:
+      - "3004:3004"
+    environment:
+      - NODE_ENV=production
+      - PORT=3004
+      - MONGODB_URI=mongodb://mongodb:27017/reservationdb
+      - JWT_SECRET=your_jwt_secret_key_change_this_in_production
+      - DISCOVERY_URL=http://discovery:3000
+      - SERVICE_URL=http://reservation:3004
+      - AUTH_SERVICE_URL=http://auth:3001
+      - CARS_SERVICE_URL=http://cars:3002
+      - MAIL_HOST=smtp.gmail.com
+      - MAIL_PORT=587
+      - MAIL_USER=jihedafli2017@gmail.com
+      - MAIL_PASS=dcqlydtcopmgkjyw
+      - MAIL_FROM=Agence Location <jihedafli2017@gmail.com>
+    volumes:
+      - reservation_uploads:/app/uploads
+    depends_on:
+      - mongodb
+      - discovery
+      - auth
+      - cars
+    networks:
+      - app-network
+
 networks:
   app-network:
     driver: bridge
 
 volumes:
   mongodb_data:
+    driver: local
+  reservation_uploads:
     driver: local

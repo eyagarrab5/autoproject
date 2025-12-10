@@ -2,6 +2,13 @@ const nodemailer = require('nodemailer');
 
 class EmailService {
   constructor() {
+    console.log('Initializing email service with:', {
+      host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+      port: process.env.EMAIL_PORT || 587,
+      user: process.env.EMAIL_USER ? `${process.env.EMAIL_USER.substring(0, 5)}...` : 'NOT SET',
+      passwordSet: !!process.env.EMAIL_PASSWORD
+    });
+    
     this.transporter = nodemailer.createTransport({
       host: process.env.EMAIL_HOST || 'smtp.gmail.com',
       port: process.env.EMAIL_PORT || 587,
@@ -37,8 +44,9 @@ class EmailService {
       console.log('Password reset email sent: %s', info.messageId);
       return { success: true, messageId: info.messageId };
     } catch (error) {
-      console.error('Error sending password reset email:', error);
-      throw new Error('Failed to send password reset email');
+      console.error('Error sending password reset email:', error.message);
+      console.error('Full error:', error);
+      throw new Error(`Failed to send password reset email: ${error.message}`);
     }
   }
 

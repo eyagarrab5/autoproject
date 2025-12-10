@@ -31,7 +31,7 @@ exports.protect = async (req, res, next) => {
 
       // Optionally verify user exists via auth service
       try {
-        const response = await axios.get(`${AUTH_SERVICE_URL}/api/users/${decoded.id}`, {
+        const response = await axios.get(`${AUTH_SERVICE_URL}/users/${decoded.id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         req.user = response.data.data || response.data;

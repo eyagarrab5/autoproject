@@ -14,6 +14,7 @@ const voitureCreateSchema = yup.object({
 });
 
 const voitureUpdateSchema = yup.object({
+  matr: yup.string().min(1).max(50).optional(),
   marque: yup.string().min(1).max(50).matches(/^[a-zA-Z0-9\s\-]+$/).optional(),
   modele: yup.string().min(1).max(50).optional(),
   annee: yup.number().integer().min(1900).max(2025).optional(),

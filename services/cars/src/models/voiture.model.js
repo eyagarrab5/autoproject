@@ -3,12 +3,13 @@ const schema = mongoose.Schema;
 
 // définition du schéma Voiture (Car)
 const VoitureSchema = new schema({
-    _id: {
+    matr: {
       type: String,
       required: true,
+      unique: true,
       validate: {
         validator: function(v) { return typeof v === 'string' && v.length >= 1 && v.length <= 50; },
-        message: "L'ID doit être une chaîne valide"
+        message: 'Le matricule doit être une chaîne valide'
       }
     },
     marque: {
