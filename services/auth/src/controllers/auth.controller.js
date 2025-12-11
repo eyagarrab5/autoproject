@@ -4,9 +4,9 @@ const { validationResult } = require('express-validator');
 const { logActivity } = require('../services/activity.service');
 const { logLoginAttempt, getIpAddress } = require('../services/loginHistory.service');
 
-// Generate JWT Token
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
+// Generate JWT Token (includes id and role)
+const generateToken = (id, role) => {
+  return jwt.sign({ id, role }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRE
   });
 };
@@ -45,7 +45,7 @@ exports.register = async (req, res, next) => {
     });
 
     // Generate token
-    const token = generateToken(user._id);
+    const token = generateToken(user._id, user.role);
 
     // Log activity
     const ipAddress = getIpAddress(req);
@@ -151,7 +151,7 @@ exports.login = async (req, res, next) => {
     }
 
     // Generate token
-    const token = generateToken(user._id);
+    const token = generateToken(user._id, user.role);
 
     // Log successful login
     await logLoginAttempt({
@@ -256,7 +256,7 @@ exports.updatePassword = async (req, res, next) => {
     });
 
     // Generate new token
-    const token = generateToken(user._id);
+    const token = generateToken(user._id, user.role);
 
     res.status(200).json({
       success: true,

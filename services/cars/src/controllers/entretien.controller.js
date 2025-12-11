@@ -7,13 +7,13 @@ exports.addEntretien = async (req, res) => {
     if (!req.body.car) {
       let v = null;
       if (req.body.matr != null) {
-        v = await Voiture.findById(String(req.body.matr).trim().toUpperCase()).select('_id');
+        v = await Voiture.findOne({ matr: String(req.body.matr).trim().toUpperCase() }).select('matr');
         if (!v) return res.status(400).json({ message: 'matr not found' });
-        req.body.car = v._id;
+        req.body.car = v.matr;
       } else if (req.body.voitureNumero != null) {
-        v = await Voiture.findById(String(req.body.voitureNumero).trim().toUpperCase()).select('_id');
+        v = await Voiture.findOne({ matr: String(req.body.voitureNumero).trim().toUpperCase() }).select('matr');
         if (!v) return res.status(400).json({ message: 'voitureNumero not found' });
-        req.body.car = v._id;
+        req.body.car = v.matr;
       }
     } else {
       req.body.car = String(req.body.car).trim().toUpperCase();
@@ -32,9 +32,9 @@ exports.addEntretienByMatr = async (req, res) => {
   try {
     const matr = String(req.params.matr || '').trim().toUpperCase();
     if (!matr) return res.status(400).json({ message: 'matr is required' });
-    const v = await Voiture.findById(matr).select('_id');
+    const v = await Voiture.findOne({ matr: matr }).select('matr');
     if (!v) return res.status(400).json({ message: 'matr not found' });
-    req.body.car = v._id;
+    req.body.car = v.matr;
     const entretien = new Entretien(req.body);
     await entretien.save();
     res.status(201).json(entretien);
@@ -47,8 +47,13 @@ exports.addEntretienByMatr = async (req, res) => {
 // Get all entretiens
 exports.getEntretiens = async (req, res) => {
   try {
-    const entretiens = await Entretien.find().populate('car');
-    res.status(200).json(entretiens);
+    const entretiens = await Entretien.find();
+    // Manually populate car info
+    const result = await Promise.all(entretiens.map(async (e) => {
+      const voiture = await Voiture.findOne({ matr: e.car });
+      return { ...e.toObject(), voiture };
+    }));
+    res.status(200).json(result);
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: 'Server error' });
@@ -58,11 +63,13 @@ exports.getEntretiens = async (req, res) => {
 // Get entretien by ID
 exports.getEntretienById = async (req, res) => {
   try {
-    const entretien = await Entretien.findById(req.params.id).populate('car');
+    const entretien = await Entretien.findById(req.params.id);
     if (!entretien) {
       return res.status(404).json({ message: 'Entretien not found' });
     }
-    res.status(200).json(entretien);
+    // Manually populate car info
+    const voiture = await Voiture.findOne({ matr: entretien.car });
+    res.status(200).json({ ...entretien.toObject(), voiture });
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: 'Server error' });
@@ -100,11 +107,15 @@ exports.deleteEntretien = async (req, res) => {
   }
 };
 
-// Get entretiens by car
+// Get entretiens by car (by matricule)
 exports.getEntretiensByCar = async (req, res) => {
   try {
-    const entretiens = await Entretien.find({ car: req.params.carId }).populate('car');
-    res.status(200).json(entretiens);
+    const carMatr = req.params.carId;
+    const entretiens = await Entretien.find({ car: carMatr });
+    // Manually populate car info
+    const voiture = await Voiture.findOne({ matr: carMatr });
+    const result = entretiens.map(e => ({ ...e.toObject(), voiture }));
+    res.status(200).json(result);
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: 'Server error' });
@@ -131,8 +142,13 @@ exports.searchEntretiens = async (req, res) => {
       const rx = new RegExp(String(req.query.q), 'i');
       q.$or = [{ description: rx }, { type: rx }];
     }
-    const data = await Entretien.find(q).populate('car');
-    res.status(200).json(data);
+    const entretiens = await Entretien.find(q);
+    // Manually populate car info
+    const result = await Promise.all(entretiens.map(async (e) => {
+      const voiture = await Voiture.findOne({ matr: e.car });
+      return { ...e.toObject(), voiture };
+    }));
+    res.status(200).json(result);
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: 'Server error' });
@@ -159,8 +175,13 @@ exports.sortEntretiens = async (req, res) => {
     } else {
       sort = { date: -1 };
     }
-    const data = await Entretien.find({}).populate('car').sort(sort);
-    res.status(200).json(data);
+    const entretiens = await Entretien.find({}).sort(sort);
+    // Manually populate car info
+    const result = await Promise.all(entretiens.map(async (e) => {
+      const voiture = await Voiture.findOne({ matr: e.car });
+      return { ...e.toObject(), voiture };
+    }));
+    res.status(200).json(result);
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: 'Server error' });

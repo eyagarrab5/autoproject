@@ -48,7 +48,7 @@ exports.getVoitureById = async (req, res) => {
 // Get voiture by matricule
 exports.getVoitureByMatricule = async (req, res) => {
   try {
-    const voiture = await Voiture.findById(req.params.matr);
+    const voiture = await Voiture.findOne({ matr: req.params.matr });
     if (!voiture) {
       return res.status(404).json({ message: 'Voiture not found' });
     }
@@ -98,7 +98,7 @@ exports.echo = async (req, res) => {
 // Delete voiture by matricule
 exports.deleteVoitureByMatr = async (req, res) => {
   try {
-    const v = await Voiture.findByIdAndDelete(req.params.matr);
+    const v = await Voiture.findOneAndDelete({ matr: req.params.matr });
     if (!v) return res.status(404).json({ message: 'Voiture not found' });
     res.status(200).json({ message: 'Voiture deleted successfully' });
   } catch (err) {

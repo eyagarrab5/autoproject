@@ -896,6 +896,62 @@
           "response": []
         },
         {
+          "name": "Search Entretiens",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gatewayUrl}}/cars-service/entretiens/search?type=routine&car=ABC123",
+              "host": ["{{gatewayUrl}}"],
+              "path": ["cars-service", "entretiens", "search"],
+              "query": [
+                { "key": "type", "value": "routine" },
+                { "key": "car", "value": "ABC123" },
+                { "key": "minCout", "value": "50", "disabled": true },
+                { "key": "maxCout", "value": "500", "disabled": true },
+                { "key": "startDate", "value": "2025-01-01", "disabled": true },
+                { "key": "endDate", "value": "2025-12-31", "disabled": true },
+                { "key": "q", "value": "oil", "disabled": true }
+              ]
+            },
+            "description": "Search maintenance records with filters (type, car, minCout, maxCout, startDate, endDate, q)"
+          },
+          "response": []
+        },
+        {
+          "name": "Sort Entretiens",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gatewayUrl}}/cars-service/entretiens/sort?sort=date:desc,cout:asc",
+              "host": ["{{gatewayUrl}}"],
+              "path": ["cars-service", "entretiens", "sort"],
+              "query": [
+                { "key": "sort", "value": "date:desc,cout:asc" },
+                { "key": "sortBy", "value": "cout", "disabled": true },
+                { "key": "order", "value": "desc", "disabled": true }
+              ]
+            },
+            "description": "Sort maintenance records by fields (sort=field:asc/desc or sortBy+order)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Entretiens Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gatewayUrl}}/cars-service/entretiens/stats",
+              "host": ["{{gatewayUrl}}"],
+              "path": ["cars-service", "entretiens", "stats"]
+            },
+            "description": "Get maintenance statistics (count by type, cost summary, per car stats)"
+          },
+          "response": []
+        },
+        {
           "name": "Delete Entretien",
           "request": {
             "method": "DELETE",
@@ -1154,18 +1210,22 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
               }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"voiture\": \"{{voitureId}}\",\n  \"user\": \"{{userId}}\",\n  \"dateDebut\": \"2025-12-15\",\n  \"dateFin\": \"2025-12-20\",\n  \"paiement\": \"carte\",\n  \"montant\": 250,\n  \"lieuRetrait\": \"Tunis Centre\",\n  \"lieuRetour\": \"Tunis Centre\",\n  \"commentaires\": \"Reservation test\"\n}"
+              "raw": "{\n  \"voiture\": \"{{voitureId}}\",\n  \"dateDebut\": \"2025-12-15\",\n  \"dateFin\": \"2025-12-20\",\n  \"paiement\": \"carte\",\n  \"lieuRetrait\": \"Tunis Centre\",\n  \"lieuRetour\": \"Tunis Centre\",\n  \"commentaires\": \"Reservation test\"\n}"
             },
             "url": {
               "raw": "{{gatewayUrl}}/reservation-service/reservation/add",
               "host": ["{{gatewayUrl}}"],
               "path": ["reservation-service", "reservation", "add"]
             },
-            "description": "Create a new reservation"
+            "description": "Create a new reservation (user is automatically taken from logged-in user)"
           },
           "response": []
         },
@@ -1173,7 +1233,13 @@
           "name": "Get All Reservations",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "description": "Optional - provides user context"
+              }
+            ],
             "url": {
               "raw": "{{gatewayUrl}}/reservation-service/reservation/all",
               "host": ["{{gatewayUrl}}"],
@@ -1187,7 +1253,13 @@
           "name": "Get Reservation by ID",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "description": "Optional - provides user context"
+              }
+            ],
             "url": {
               "raw": "{{gatewayUrl}}/reservation-service/reservation/{{reservationId}}",
               "host": ["{{gatewayUrl}}"],
@@ -1201,7 +1273,13 @@
           "name": "Get Reservations by User",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "description": "Optional - provides user context"
+              }
+            ],
             "url": {
               "raw": "{{gatewayUrl}}/reservation-service/reservation/user/{{userId}}",
               "host": ["{{gatewayUrl}}"],
@@ -1215,7 +1293,13 @@
           "name": "Get Reservations by Voiture",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "description": "Optional - provides user context"
+              }
+            ],
             "url": {
               "raw": "{{gatewayUrl}}/reservation-service/reservation/voiture/{{voitureId}}",
               "host": ["{{gatewayUrl}}"],
@@ -1231,6 +1315,10 @@
             "method": "PUT",
             "header": [
               {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
                 "key": "Content-Type",
                 "value": "application/json"
               }
@@ -1244,7 +1332,7 @@
               "host": ["{{gatewayUrl}}"],
               "path": ["reservation-service", "reservation", "update", "{{reservationId}}"]
             },
-            "description": "Update a reservation"
+            "description": "Update a reservation (requires authentication)"
           },
           "response": []
         },
@@ -1252,13 +1340,18 @@
           "name": "Cancel Reservation",
           "request": {
             "method": "PUT",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
             "url": {
               "raw": "{{gatewayUrl}}/reservation-service/reservation/cancel/{{reservationId}}",
               "host": ["{{gatewayUrl}}"],
               "path": ["reservation-service", "reservation", "cancel", "{{reservationId}}"]
             },
-            "description": "Cancel a reservation"
+            "description": "Cancel a reservation (requires authentication)"
           },
           "response": []
         },
@@ -1311,6 +1404,10 @@
             "method": "POST",
             "header": [
               {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
                 "key": "Content-Type",
                 "value": "application/json"
               }
@@ -1324,7 +1421,7 @@
               "host": ["{{gatewayUrl}}"],
               "path": ["reservation-service", "contrat", "add"]
             },
-            "description": "Create a new contract (generates PDF)"
+            "description": "Create a new contract (generates PDF) - requires authentication"
           },
           "response": []
         },
@@ -1376,6 +1473,10 @@
             "method": "PUT",
             "header": [
               {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
                 "key": "Content-Type",
                 "value": "application/json"
               }
@@ -1389,7 +1490,7 @@
               "host": ["{{gatewayUrl}}"],
               "path": ["reservation-service", "contrat", "{{contratId}}"]
             },
-            "description": "Update a contract"
+            "description": "Update a contract (requires authentication)"
           },
           "response": []
         },
@@ -1397,13 +1498,18 @@
           "name": "Cancel Contrat",
           "request": {
             "method": "PUT",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
             "url": {
               "raw": "{{gatewayUrl}}/reservation-service/contrat/{{contratId}}/cancel",
               "host": ["{{gatewayUrl}}"],
               "path": ["reservation-service", "contrat", "{{contratId}}", "cancel"]
             },
-            "description": "Cancel a contract"
+            "description": "Cancel a contract (requires authentication)"
           },
           "response": []
         }
