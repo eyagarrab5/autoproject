@@ -1,78 +1,81 @@
-const express = require('express');
-const { createProxyMiddleware } = require('http-proxy-middleware');
-const axios = require('axios');
+const express = require("express");
+const axios = require("axios");
 
 const app = express();
-const PORT = process.env.PORT || 8080;
-const DISCOVERY_URL = process.env.DISCOVERY_URL || 'http://discovery:3000';
+const port = process.env.PORT || 5000;
+const servicedecouverteurl = process.env.DISCOVERY_URL || "http://localhost:4000/services";
 
-// Helper to get service URL from discovery
-async function getServiceUrl(serviceName) {
+app.use(express.json());
+
+// Middleware to find target service from discovery
+app.use(async (req, res, next) => {
   try {
-    const response = await axios.get(`${DISCOVERY_URL}/${serviceName}`);
-    return response.data.url;
-  } catch (error) {
-    console.error(`Error fetching service ${serviceName}:`, error.message);
-    return null;
-  }
-}
+    const reponse = await axios.get(servicedecouverteurl);
+    const services = reponse.data;
 
-// Proxy middleware factory
-const createServiceProxy = (serviceName) => {
-  return async (req, res, next) => {
-    const serviceUrl = await getServiceUrl(serviceName);
-    if (!serviceUrl) {
-      return res.status(503).json({ message: `${serviceName} unavailable` });
+    // Route to auth-service
+    if (req.path.startsWith("/auth-service")) {
+      req.targetService = services.find((s) => s.name === "auth-service");
+    } 
+    // Route to cars-service
+    else if (req.path.startsWith("/cars-service")) {
+      req.targetService = services.find((s) => s.name === "cars-service");
     }
-    
-    createProxyMiddleware({
-      target: serviceUrl,
-      changeOrigin: true,
-    })(req, res, next);
-  };
-};
+    // Route to payment-service
+    else if (req.path.startsWith("/payment-service")) {
+      req.targetService = services.find((s) => s.name === "payment-service");
+    }
+    // Route to reservation-service
+    else if (req.path.startsWith("/reservation-service")) {
+      req.targetService = services.find((s) => s.name === "reservation-service");
+    }
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({ status: 'OK', service: 'gateway', message: 'Gateway is running' });
-});
-
-// List all registered services
-app.get('/services', async (req, res) => {
-  try {
-    const response = await axios.get(DISCOVERY_URL);
-    res.json({ services: response.data });
-  } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch services', error: error.message });
+    if (req.targetService) {
+      req.targetServiceUrl = `${req.targetService.address}:${req.targetService.port}`;
+      console.log("Target Service URL: " + req.targetServiceUrl);
+      next();
+    } else {
+      res.status(404).send({ message: "Service non trouvable" });
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(500).send({ message: "Erreur de connexion au service de decouverte" });
   }
 });
 
-// Route auth-related endpoints to auth-service
-app.use('/auth', createServiceProxy('auth-service'));
-app.use('/users', createServiceProxy('auth-service'));
-app.use('/profile', createServiceProxy('auth-service'));
-app.use('/activity', createServiceProxy('auth-service'));
-app.use('/login-history', createServiceProxy('auth-service'));
+// Proxy requests to target service
+app.use(async (req, res) => {
+  try {
+    console.log("Request body:", req.body);
+    const reponse = await axios({
+      method: req.method,
+      url: `${req.targetServiceUrl}${req.originalUrl.replace(
+        /^\/(auth-service|cars-service|payment-service|reservation-service)/,
+        ""
+      )}`,
+      data: req.body,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(req.headers.authorization && { 'Authorization': req.headers.authorization })
+      }
+    });
+    console.log("Response data:", reponse.data);
+    res.send(reponse.data);
+  } catch (error) {
+    console.log("Proxy error:", error.message);
+    if (error.response) {
+      res.status(error.response.status).send(error.response.data);
+    } else {
+      res.status(500).send({ message: "Erreur de proxy", error: error.message });
+    }
+  }
+});
 
-// Route cars-related endpoints to cars-service
-app.use('/voitures', createServiceProxy('cars-service'));
-app.use('/entretiens', createServiceProxy('cars-service'));
-
-// Route payment-related endpoints to payment-service
-app.use('/payments', createServiceProxy('payment-service'));
-
-// Route reservation-related endpoints to reservation-service
-// Note: reservation service uses auth-service for users and cars-service for voitures
-app.use('/reservation', createServiceProxy('reservation-service'));
-app.use('/contrat', createServiceProxy('reservation-service'));
-app.use('/files', createServiceProxy('reservation-service'));
-
-app.listen(PORT, () => {
-  console.log(`Gateway running on port ${PORT}`);
-  console.log('Routes configured:');
-  console.log('  - /auth, /users, /profile, /activity, /login-history -> auth-service');
-  console.log('  - /voitures, /entretiens -> cars-service');
-  console.log('  - /payments -> payment-service');
-  console.log('  - /reservation, /contrat, /files -> reservation-service');
-  console.log('Note: reservation-service uses auth-service for users and cars-service for cars');
+app.listen(port, () => {
+  console.log("Gateway en execution sur le port " + port);
+  console.log("Routes configurees:");
+  console.log("  - /auth-service/* -> auth-service");
+  console.log("  - /cars-service/* -> cars-service");
+  console.log("  - /payment-service/* -> payment-service");
+  console.log("  - /reservation-service/* -> reservation-service");
 });

@@ -1,8 +1,8 @@
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
 
-// Get the auth service URL from environment or use discovery
-const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://auth:3001';
+// Get the auth service URL from environment or use localhost
+const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:3001';
 
 // Protect routes - require authentication
 exports.protect = async (req, res, next) => {

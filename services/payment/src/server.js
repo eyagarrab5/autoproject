@@ -69,9 +69,8 @@ app.set('io', io);
 
 // Start server
 const PORT = process.env.PORT || 3003;
-const DISCOVERY_URL = process.env.DISCOVERY_URL || 'http://discovery:3000';
+const DISCOVERY_URL = process.env.DISCOVERY_URL || 'http://localhost:4000';
 const SERVICE_NAME = 'payment-service';
-const SERVICE_URL = process.env.SERVICE_URL || `http://payment:${PORT}`;
 
 server.listen(PORT, async () => {
   console.log(`Payment Service is running on port ${PORT}`);
@@ -80,8 +79,9 @@ server.listen(PORT, async () => {
   // Register with Discovery Service
   try {
     await axios.post(`${DISCOVERY_URL}/register`, {
-      serviceName: SERVICE_NAME,
-      url: SERVICE_URL
+      name: SERVICE_NAME,
+      address: 'http://localhost',
+      port: PORT
     });
     console.log(`Registered ${SERVICE_NAME} with Discovery Service`);
   } catch (error) {

@@ -1,45 +1,34 @@
-const express = require('express');
-const cors = require('cors');
+const express = require("express");
 
 const app = express();
+const port = process.env.PORT || 4000;
+
+let services = [];
+
 app.use(express.json());
-app.use(cors());
 
-const PORT = process.env.PORT || 3000;
-
-// In-memory registry
-const registry = {};
-
-app.post('/register', (req, res) => {
-  const { serviceName, url } = req.body;
-  if (!serviceName || !url) {
-    return res.status(400).json({ message: 'Service name and URL are required' });
+// Register a service
+app.post("/register", (req, res) => {
+  const { name, address, port } = req.body;
+  
+  // Check if service already exists and update it
+  const existingIndex = services.findIndex((s) => s.name === name);
+  if (existingIndex !== -1) {
+    services[existingIndex] = { name, address, port };
+    console.log("Service mis a jour: " + name);
+  } else {
+    services.push({ name, address, port });
+    console.log("Service enregistre: " + name);
   }
-
-  registry[serviceName] = {
-    url,
-    timestamp: Date.now()
-  };
-
-  console.log(`Registered service: ${serviceName} at ${url}`);
-  res.json({ message: 'Registered successfully' });
+  
+  res.json({ message: "Service enregistre avec succes" });
 });
 
-app.get('/:serviceName', (req, res) => {
-  const { serviceName } = req.params;
-  const service = registry[serviceName];
-
-  if (!service) {
-    return res.status(404).json({ message: 'Service not found' });
-  }
-
-  res.json(service);
+// Get all services
+app.get("/services", (req, res) => {
+  res.json(services);
 });
 
-app.get('/', (req, res) => {
-    res.json(registry);
-});
-
-app.listen(PORT, () => {
-  console.log(`Discovery Service running on port ${PORT}`);
+app.listen(port, () => {
+  console.log("Service de decouverte en execution sur le port " + port);
 });
