@@ -1,7 +1,7 @@
 const express = require("express");
 const axios = require("axios");
 const app = express();
-port = 5000;
+const PORT = process.env.PORT || 5000;
 const servicedecouverteurl = "http://localhost:4000/services";
 app.use(express.json());
 app.use(async (req, res, next) => {
@@ -26,7 +26,7 @@ app.use(async (req, res, next) => {
       res.status(404).send({ message: "non trouvable" });
     }
   } catch (err) {
-    console.log(error);
+    console.log(err);
   }
 });
 
@@ -49,4 +49,4 @@ app.use(async (req, res) => {
   }
 });
 
-app.listen(port, console.log("gateway in run"));
+app.listen(PORT, () => console.log(`Gateway running on ${PORT}`));

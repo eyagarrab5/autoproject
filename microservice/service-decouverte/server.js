@@ -1,7 +1,7 @@
 const express = require("express");
 
-app = express();
-port = 4000;
+const app = express();
+const PORT = process.env.PORT || 4000;
 
 let services = [];
 
@@ -11,9 +11,10 @@ app.post("/register", (req, res) => {
   const { name, address, port } = req.body;
   services.push({ name, address, port });
   console.log("Service enregistre :" + name);
+  res.status(201).json({ registered: true });
 });
 app.get("/services", (req, res) => {
   res.json(services);
 });
 
-app.listen(port, console.log("service decouverte est en execution"));
+app.listen(PORT, () => console.log(`Discovery service running on ${PORT}`));

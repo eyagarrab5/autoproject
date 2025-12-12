@@ -5,8 +5,8 @@ const path = require("path");
 const axios = require("axios");
 const db = require("./config/dbconnection.json");
 mongo
-  .connect(db.url)
-  .then(console.log("database connected"))
+  .connect(db.url, { autoIndex: false })
+  .then(() => console.log("database connected"))
   .catch((err) => {
     console.log(err);
   });
@@ -17,15 +17,16 @@ const app = express();
 
 const serviceName = "monservice voiture";
 const discovryserviceurl = "http://localhost:4000/register";
+const PORT = process.env.PORT || 3001;
 
 const registerService = async () => {
   try {
     await axios.post(discovryserviceurl, {
       name: "service-voiture",
       address: "http://localhost",
-      port: 3001,
+      port: PORT,
     });
-    console.log(serviceName + "bien enregistre");
+    console.log(serviceName + " bien enregistre");
   } catch (error) {
     console.log("erreur dans d'enregistrement :" + error.message);
   }
@@ -42,7 +43,7 @@ app.use("/voiture", voitureRouter);
 app.get("/", (req, res) => {
   res.send("bienvenue dans votre service : " + serviceName);
 });
-const server = http.createServer(app, console.log("server run"));
+const server = http.createServer(app);
 const io = require("socket.io")(server);
 io.on("connection", (socket) => {
   socket.emit("msg", "user connected");
@@ -55,4 +56,4 @@ io.on("connection", (socket) => {
     io.emit("msg", "user disconnect");
   });
 });
-server.listen(3001);
+server.listen(PORT, () => console.log(`Server running on ${PORT}`));

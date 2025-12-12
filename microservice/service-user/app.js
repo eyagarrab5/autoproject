@@ -5,8 +5,8 @@ const path = require("path");
 const axios = require("axios");
 const db = require("./config/dbconnection.json");
 mongo
-  .connect(db.url)
-  .then(console.log("database connected"))
+  .connect(db.url, { autoIndex: false })
+  .then(() => console.log("database connected"))
   .catch((err) => {
     console.log(err);
   });

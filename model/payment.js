@@ -25,6 +25,10 @@ const paymentSchema=new schema({
     createdAt:{
         type:Date,
         default:Date.now
-    }
+    },
+    transactions:[{
+        type:schema.Types.ObjectId,
+        ref:'paymentTransaction'
+    }]
 })
 module.exports=mongo.model('payment',paymentSchema)

@@ -4,14 +4,18 @@ const mongo = require("mongoose");
 const path = require("path");
 const db = require("./config/dbconnection.json");
 mongo
-  .connect(db.url)
-  .then(console.log("database connected"))
+  .connect(db.url, { autoIndex: false })
+  .then(() => console.log("database connected"))
   .catch((err) => {
     console.log(err);
   });
 const testRouter = require("./routes/test");
 const voitureRouter = require("./routes/voiture");
 const paymentRouter = require("./routes/payment");
+const paymentTransactionRouter = require("./routes/paymentTransaction");
+const paymentMethodRouter = require("./routes/paymentMethod");
+const refundRouter = require("./routes/refund");
+const invoiceRouter = require("./routes/invoice");
 
 const app = express();
 app.use(express.json());
@@ -34,9 +38,14 @@ app.use("/voiture", voitureRouter);
 
 // Mount API routes under a distinct path to avoid conflict with the UI route
 app.use("/api/payments", paymentRouter);
+app.use("/api/payment-transactions", paymentTransactionRouter);
+app.use("/api/payment-methods", paymentMethodRouter);
+app.use("/api/refunds", refundRouter);
+app.use("/api/invoices", invoiceRouter);
 
 const server = http.createServer(app);
-console.log("Server running");
+const PORT = process.env.PORT || 3000;
+console.log("Server starting...");
 const io = require("socket.io")(server);
 io.on("connection", (socket) => {
   socket.emit("msg", "user connected");
@@ -49,4 +58,4 @@ io.on("connection", (socket) => {
     io.emit("msg", "user disconnect");
   });
 });
-server.listen(3000);
+server.listen(PORT, () => console.log(`Server running on ${PORT}`));
