@@ -19,8 +19,15 @@ router.get("/user/:userId/default", paymentMethodController.getDefaultPaymentMet
 // Get payment methods by gateway
 router.get("/user/:userId/gateway/:gateway", paymentMethodController.getPaymentMethodsByGateway);
 
-// Get payment method by ID
+// Get payment method statistics
+router.get("/stats/all", paymentMethodController.getPaymentMethodStats);
+
+// Get expired payment methods
+router.get("/expired/list", paymentMethodController.getExpiredPaymentMethods);
+
+// Get payment method by ID - both /id/:id and /:id patterns for flexibility
 router.get("/id/:id", paymentMethodController.getPaymentMethodById);
+router.get("/:id", paymentMethodController.getPaymentMethodById);
 
 // Update payment method
 router.put("/:id", paymentMethodController.updatePaymentMethod);

@@ -241,7 +241,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"paymentId\": \"{{paymentId}}\",\n  \"transactionId\": \"pi_1A2b3C4d5E\",\n  \"gateway\": \"stripe\",\n  \"eventType\": \"succeeded\",\n  \"amount\": 150.50,\n  \"currency\": \"EUR\",\n  \"status\": \"completed\",\n  \"metadata\": {\n    \"card_brand\": \"visa\"\n  }\n}"
+              "raw": "{\"paymentId\": \"{{paymentId}}\", \"transactionId\": \"pi_1A2b3C4d5E\", \"gateway\": \"stripe\", \"eventType\": \"succeeded\", \"amount\": 150.50, \"currency\": \"EUR\", \"status\": \"completed\", \"metadata\": {\"card_brand\": \"visa\"}}"
             },
             "url": {
               "raw": "http://localhost:3010/api/payment-transactions",

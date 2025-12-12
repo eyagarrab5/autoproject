@@ -10,44 +10,30 @@ router.get("/test", (req, res) => {
 // Create a new payment transaction
 router.post("/", paymentTransactionController.createPaymentTransaction);
 
-// Get all payment transactions
+// Specific routes first (before the generic /:id route)
+router.get("/payment/:paymentId", paymentTransactionController.getTransactionsByPaymentId);
+router.get("/gateway/:gateway", paymentTransactionController.getTransactionsByGateway);
+router.get("/event/:eventType", paymentTransactionController.getTransactionsByEventType);
+router.get("/status/:status", paymentTransactionController.getTransactionsByStatus);
+router.get("/recent/list", paymentTransactionController.getRecentTransactions);
+router.get("/daterange/list", paymentTransactionController.getTransactionsInDateRange);
+router.get("/failed/list", paymentTransactionController.getFailedTransactions);
+router.get("/successful/list", paymentTransactionController.getSuccessfulTransactions);
+router.get("/stats/gateway", paymentTransactionController.getTransactionStatsByGateway);
+
+// Generic routes
+// Get all payment transactions (must come after specific routes)
 router.get("/", paymentTransactionController.getAllPaymentTransactions);
 
-// Get payment transaction by ID
+// Get payment transaction by ID - both /id/:id and /:id patterns
 router.get("/id/:id", paymentTransactionController.getPaymentTransactionById);
-
-// Get transactions by payment ID
-router.get("/payment/:paymentId", paymentTransactionController.getTransactionsByPaymentId);
-
-// Get transactions by gateway
-router.get("/gateway/:gateway", paymentTransactionController.getTransactionsByGateway);
-
-// Get transactions by event type
-router.get("/event/:eventType", paymentTransactionController.getTransactionsByEventType);
-
-// Get transactions by status
-router.get("/status/:status", paymentTransactionController.getTransactionsByStatus);
-
-// Get recent transactions
-router.get("/recent/list", paymentTransactionController.getRecentTransactions);
-
-// Get transactions in date range
-router.get("/daterange/list", paymentTransactionController.getTransactionsInDateRange);
-
-// Get failed transactions
-router.get("/failed/list", paymentTransactionController.getFailedTransactions);
-
-// Get successful transactions
-router.get("/successful/list", paymentTransactionController.getSuccessfulTransactions);
+router.get("/:id", paymentTransactionController.getPaymentTransactionById);
 
 // Update payment transaction
 router.put("/:id", paymentTransactionController.updatePaymentTransaction);
 
 // Delete payment transaction
 router.delete("/:id", paymentTransactionController.deletePaymentTransaction);
-
-// Statistics endpoints
-router.get("/stats/gateway", paymentTransactionController.getTransactionStatsByGateway);
 router.get("/stats/event-type", paymentTransactionController.getTransactionStatsByEventType);
 router.get("/stats/status", paymentTransactionController.getTransactionStatsByStatus);
 
