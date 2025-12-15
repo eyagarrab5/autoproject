@@ -1218,14 +1218,14 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"voiture\": \"{{voitureId}}\",\n  \"dateDebut\": \"2025-12-15\",\n  \"dateFin\": \"2025-12-20\",\n  \"paiement\": \"carte\",\n  \"lieuRetrait\": \"Tunis Centre\",\n  \"lieuRetour\": \"Tunis Centre\",\n  \"commentaires\": \"Reservation test\"\n}"
+              "raw": "{\n  \"voiture\": \"{{voitureId}}\",\n  \"user\": \"{{userId}}\",\n  \"dateDebut\": \"2025-12-15\",\n  \"dateFin\": \"2025-12-20\",\n  \"paiement\": \"carte\",\n  \"lieuRetrait\": \"Tunis Centre\",\n  \"lieuRetour\": \"Tunis Centre\",\n  \"commentaires\": \"Reservation test\"\n}"
             },
             "url": {
               "raw": "{{gatewayUrl}}/reservation-service/reservation/add",
               "host": ["{{gatewayUrl}}"],
               "path": ["reservation-service", "reservation", "add"]
             },
-            "description": "Create a new reservation (user is automatically taken from logged-in user)"
+            "description": "Create a new reservation. Requires user ID and voiture ID."
           },
           "response": []
         },

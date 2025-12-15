@@ -1,12 +1,24 @@
 const axios = require('axios');
 
 const DISCOVERY_URL = process.env.DISCOVERY_URL || 'http://discovery:3000';
+const USE_DISCOVERY = process.env.USE_DISCOVERY === 'true';
+
+// Direct URLs for local development
+const SERVICE_URLS = {
+  'auth-service': process.env.AUTH_SERVICE_URL || 'http://localhost:3001',
+  'cars-service': process.env.CARS_SERVICE_URL || 'http://localhost:3002'
+};
 
 // Cache for service URLs
 const serviceCache = {};
 const CACHE_TTL = 30000; // 30 seconds
 
 async function getServiceUrl(serviceName) {
+  // In local development, use direct URLs
+  if (!USE_DISCOVERY) {
+    return SERVICE_URLS[serviceName] || null;
+  }
+  
   const now = Date.now();
   
   // Check cache
@@ -33,13 +45,8 @@ async function getServiceUrl(serviceName) {
       return serviceCache[serviceName].url;
     }
     
-    // Fallback URLs
-    const fallbacks = {
-      'auth-service': process.env.AUTH_SERVICE_URL || 'http://auth:3001',
-      'cars-service': process.env.CARS_SERVICE_URL || 'http://cars:3002'
-    };
-    
-    return fallbacks[serviceName] || null;
+    // Fallback to direct URLs
+    return SERVICE_URLS[serviceName] || null;
   }
 }
 
@@ -48,9 +55,9 @@ const authService = {
   async getUserById(userId, token = null) {
     try {
       const baseUrl = await getServiceUrl('auth-service');
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
       
-      const response = await axios.get(`${baseUrl}/users/${userId}`, { headers });
+      // Use internal endpoint for service-to-service communication
+      const response = await axios.get(`${baseUrl}/internal/users/${userId}`);
       return response.data.data || response.data;
     } catch (error) {
       console.error(`Error fetching user ${userId}:`, error.message);
@@ -61,9 +68,9 @@ const authService = {
   async getAllUsers(token = null) {
     try {
       const baseUrl = await getServiceUrl('auth-service');
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
       
-      const response = await axios.get(`${baseUrl}/users`, { headers });
+      // Use internal endpoint for service-to-service communication
+      const response = await axios.get(`${baseUrl}/internal/users`);
       return response.data.data || response.data || [];
     } catch (error) {
       console.error('Error fetching users:', error.message);

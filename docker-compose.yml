@@ -1,0 +1,103 @@
+services:
+  mongodb:
+    image: mongo:7
+    container_name: autoproject-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+  discovery:
+    build:
+      context: ./services/discovery
+    container_name: autoproject-discovery
+    environment:
+      - PORT=4000
+    ports:
+      - "4000:4000"
+
+  auth:
+    build:
+      context: ./services/auth
+    container_name: autoproject-auth
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - DISCOVERY_URL=http://discovery:4000
+      - SERVICE_ADDRESS=http://auth
+      - MONGODB_URI=mongodb://mongodb:27017/authdb
+      - JWT_SECRET=dev_secret_change_me
+      - JWT_EXPIRE=30d
+    ports:
+      - "3001:3001"
+    depends_on:
+      - discovery
+
+  cars:
+    build:
+      context: ./services/cars
+    container_name: autoproject-cars
+    environment:
+      - NODE_ENV=production
+      - PORT=3002
+      - DISCOVERY_URL=http://discovery:4000
+      - SERVICE_ADDRESS=http://cars
+      - MONGODB_URI=mongodb://mongodb:27017/carsdb
+    ports:
+      - "3002:3002"
+    depends_on:
+      - discovery
+
+  payment:
+    build:
+      context: ./services/payment
+    container_name: autoproject-payment
+    environment:
+      - NODE_ENV=production
+      - PORT=3003
+      - DISCOVERY_URL=http://discovery:4000
+      - SERVICE_ADDRESS=http://payment
+      - MONGODB_URI=mongodb://mongodb:27017/paymentdb
+    ports:
+      - "3003:3003"
+    depends_on:
+      - discovery
+
+  reservation:
+    build:
+      context: ./services/reservation
+    container_name: autoproject-reservation
+    environment:
+      - NODE_ENV=production
+      - PORT=3004
+      - DISCOVERY_URL=http://discovery:4000
+      - SERVICE_ADDRESS=http://reservation
+      - MONGODB_URI=mongodb://mongodb:27017/reservationdb
+      - USE_DISCOVERY=false
+      - AUTH_SERVICE_URL=http://auth:3001
+      - CARS_SERVICE_URL=http://cars:3002
+    ports:
+      - "3004:3004"
+    volumes:
+      - ./services/reservation/uploads:/app/uploads
+    depends_on:
+      - discovery
+
+  gateway:
+    build:
+      context: ./services/gateway
+    container_name: autoproject-gateway
+    environment:
+      - PORT=5000
+      - DISCOVERY_URL=http://discovery:4000/services
+    ports:
+      - "5000:5000"
+    depends_on:
+      - discovery
+      - auth
+      - cars
+      - payment
+      - reservation
+
+volumes:
+  mongodb_data:

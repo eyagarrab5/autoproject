@@ -11,7 +11,7 @@ dotenv.config();
 const app = express();
 
 // Connect to MongoDB
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://mongodb:27017/carsdb';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/carsdb';
 mongoose.connect(MONGODB_URI)
   .then(() => console.log('Cars Service: Database connected'))
   .catch((err) => console.error('Cars Service: Database connection error:', err));
@@ -44,22 +44,31 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 3002;
 const DISCOVERY_URL = process.env.DISCOVERY_URL || 'http://localhost:4000';
 const SERVICE_NAME = 'cars-service';
+const SERVICE_ADDRESS = process.env.SERVICE_ADDRESS || 'http://localhost';
+const DISCOVERY_REGISTER_ATTEMPTS = Number(process.env.DISCOVERY_REGISTER_ATTEMPTS || 10);
+
+async function registerWithDiscovery(attempt = 1) {
+  try {
+    await axios.post(`${DISCOVERY_URL}/register`, {
+      name: SERVICE_NAME,
+      address: SERVICE_ADDRESS,
+      port: PORT
+    });
+    console.log(`Registered ${SERVICE_NAME} with Discovery Service`);
+  } catch (error) {
+    console.error('Failed to register with Discovery Service:', error.message);
+    if (attempt < DISCOVERY_REGISTER_ATTEMPTS) {
+      setTimeout(() => registerWithDiscovery(attempt + 1), 3000);
+    }
+  }
+}
 
 app.listen(PORT, async () => {
   console.log(`Cars Service is running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV}`);
 
   // Register with Discovery Service
-  try {
-    await axios.post(`${DISCOVERY_URL}/register`, {
-      name: SERVICE_NAME,
-      address: 'http://localhost',
-      port: PORT
-    });
-    console.log(`Registered ${SERVICE_NAME} with Discovery Service`);
-  } catch (error) {
-    console.error('Failed to register with Discovery Service:', error.message);
-  }
+  registerWithDiscovery();
 });
 
 module.exports = app;
