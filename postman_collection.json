@@ -253,7 +253,7 @@
           "response": []
         },
         {
-          "name": "Login User",
+          "name": "Login User ",
           "event": [
             {
               "listen": "test",
@@ -278,19 +278,20 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\"\n}"
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\",\n  \"token\": \"{{authToken}}\"\n}"
             },
             "url": {
               "raw": "{{gatewayUrl}}/auth-service/auth/login",
               "host": ["{{gatewayUrl}}"],
               "path": ["auth-service", "auth", "login"]
             },
-            "description": "Login with email and password"
+            "description": "Login with email, password, and a token returned from Register"
           },
           "response": []
         },
+       
         {
-          "name": "Login Admin",
+          "name": "Login Admin ",
           "event": [
             {
               "listen": "test",
@@ -315,17 +316,18 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"admin123\"\n}"
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"admin123\",\n  \"token\": \"{{adminToken}}\"\n}"
             },
             "url": {
               "raw": "{{gatewayUrl}}/auth-service/auth/login",
               "host": ["{{gatewayUrl}}"],
               "path": ["auth-service", "auth", "login"]
             },
-            "description": "Login as admin with email and password"
+            "description": "Login as admin with email, password, and a token returned from Register"
           },
           "response": []
         },
+        
         {
           "name": "Get Current User",
           "request": {
@@ -1515,6 +1517,135 @@
         }
       ],
       "description": "Contract (Contrat) management endpoints via reservation-service"
+    },
+    {
+      "name": "Activity Logs",
+      "description": "Activity logs endpoints via auth-service",
+      "item": [
+        {
+          "name": "Get My Activity Logs",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }],
+            "url": {
+              "raw": "{{gatewayUrl}}/auth-service/activity/me",
+              "host": ["{{gatewayUrl}}"],
+              "path": ["auth-service", "activity", "me"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Activity Logs (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": {
+              "raw": "{{gatewayUrl}}/auth-service/activity",
+              "host": ["{{gatewayUrl}}"],
+              "path": ["auth-service", "activity"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Activity Stats (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": {
+              "raw": "{{gatewayUrl}}/auth-service/activity/stats",
+              "host": ["{{gatewayUrl}}"],
+              "path": ["auth-service", "activity", "stats"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cleanup Old Activity Logs (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": {
+              "raw": "{{gatewayUrl}}/auth-service/activity/cleanup",
+              "host": ["{{gatewayUrl}}"],
+              "path": ["auth-service", "activity", "cleanup"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Login History",
+      "description": "Login history endpoints via auth-service",
+      "item": [
+        {
+          "name": "Get My Login History",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }],
+            "url": {
+              "raw": "{{gatewayUrl}}/auth-service/login-history/me",
+              "host": ["{{gatewayUrl}}"],
+              "path": ["auth-service", "login-history", "me"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Active Sessions",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }],
+            "url": {
+              "raw": "{{gatewayUrl}}/auth-service/login-history/active-sessions",
+              "host": ["{{gatewayUrl}}"],
+              "path": ["auth-service", "login-history", "active-sessions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Login History (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": {
+              "raw": "{{gatewayUrl}}/auth-service/login-history",
+              "host": ["{{gatewayUrl}}"],
+              "path": ["auth-service", "login-history"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Login Stats (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": {
+              "raw": "{{gatewayUrl}}/auth-service/login-history/stats",
+              "host": ["{{gatewayUrl}}"],
+              "path": ["auth-service", "login-history", "stats"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cleanup Old Login History (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": {
+              "raw": "{{gatewayUrl}}/auth-service/login-history/cleanup",
+              "host": ["{{gatewayUrl}}"],
+              "path": ["auth-service", "login-history", "cleanup"]
+            }
+          },
+          "response": []
+        }
+      ]
     }
   ]
 }

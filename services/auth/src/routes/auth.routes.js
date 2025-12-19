@@ -27,7 +27,8 @@ const registerValidation = [
 
 const loginValidation = [
   body('email').isEmail().withMessage('Please provide a valid email'),
-  body('password').notEmpty().withMessage('Password is required')
+  body('password').notEmpty().withMessage('Password is required'),
+  body('token').notEmpty().withMessage('Token is required')
 ];
 
 // Public routes

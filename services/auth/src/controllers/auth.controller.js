@@ -87,10 +87,10 @@ exports.login = async (req, res, next) => {
       });
     }
 
-    const { email, password } = req.body;
-
     const ipAddress = getIpAddress(req);
     const userAgent = req.headers['user-agent'] || 'unknown';
+
+    const { email, password, token: providedToken } = req.body;
 
     // Find user by email and include password
     const user = await User.findOne({ email }).select('+password');
@@ -142,6 +142,42 @@ exports.login = async (req, res, next) => {
         userAgent,
         loginStatus: 'failed',
         failureReason: 'Incorrect password'
+      });
+
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid credentials'
+      });
+    }
+
+    // Validate provided token (must be a valid JWT for the same user)
+    let decoded;
+    try {
+      decoded = jwt.verify(providedToken, process.env.JWT_SECRET);
+    } catch (error) {
+      await logLoginAttempt({
+        userId: user._id,
+        email,
+        ipAddress,
+        userAgent,
+        loginStatus: 'failed',
+        failureReason: 'Invalid token'
+      });
+
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid credentials'
+      });
+    }
+
+    if (!decoded || String(decoded.id) !== String(user._id)) {
+      await logLoginAttempt({
+        userId: user._id,
+        email,
+        ipAddress,
+        userAgent,
+        loginStatus: 'failed',
+        failureReason: 'Token does not match user'
       });
 
       return res.status(401).json({

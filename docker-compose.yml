@@ -20,6 +20,8 @@ services:
     build:
       context: ./services/auth
     container_name: autoproject-auth
+    env_file:
+      - ./services/auth/.env
     environment:
       - NODE_ENV=production
       - PORT=3001
@@ -43,6 +45,8 @@ services:
       - DISCOVERY_URL=http://discovery:4000
       - SERVICE_ADDRESS=http://cars
       - MONGODB_URI=mongodb://mongodb:27017/carsdb
+      - JWT_SECRET=dev_secret_change_me
+      - AUTH_SERVICE_URL=http://auth:3001
     ports:
       - "3002:3002"
     depends_on:
@@ -58,6 +62,8 @@ services:
       - DISCOVERY_URL=http://discovery:4000
       - SERVICE_ADDRESS=http://payment
       - MONGODB_URI=mongodb://mongodb:27017/paymentdb
+      - JWT_SECRET=dev_secret_change_me
+      - AUTH_SERVICE_URL=http://auth:3001
     ports:
       - "3003:3003"
     depends_on:
@@ -67,6 +73,8 @@ services:
     build:
       context: ./services/reservation
     container_name: autoproject-reservation
+    env_file:
+      - ./services/reservation/.env
     environment:
       - NODE_ENV=production
       - PORT=3004
